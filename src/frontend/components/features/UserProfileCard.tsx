@@ -1,8 +1,4 @@
-interface User {
-  id: number;
-  name: string;
-  email: string;
-}
+import { User } from '@/frontend/types';
 
 interface UserProfileCardProps {
   user: User;

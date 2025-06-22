@@ -1,19 +1,14 @@
 import { NextResponse } from 'next/server';
-
-// Mock data - in a real app, this would come from a database
-const users = [
-  { id: 1, name: 'Alice Johnson', email: 'alice@example.com' },
-  { id: 2, name: 'Bob Smith', email: 'bob@example.com' },
-  { id: 3, name: 'Charlie Brown', email: 'charlie@example.com' },
-];
+import { UserService } from '@/backend/services/userService';
 
 export async function GET() {
   try {
-    // In a real app, you'd fetch from a database here
+    const users = await UserService.getAllUsers();
     return NextResponse.json(users);
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error fetching users:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch users' },
+      { error: error.message || 'Failed to fetch users' },
       { status: 500 }
     );
   }
@@ -31,19 +26,21 @@ export async function POST(request: Request) {
       );
     }
 
-    // In a real app, you'd save to a database here
-    const newUser = {
-      id: users.length + 1,
-      name,
-      email,
-    };
-
-    users.push(newUser);
-
+    const newUser = await UserService.createUser({ name, email });
     return NextResponse.json(newUser, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error creating user:', error);
+    
+    // Handle specific error cases
+    if (error.message.includes('already exists')) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 409 }
+      );
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to create user' },
+      { error: error.message || 'Failed to create user' },
       { status: 500 }
     );
   }

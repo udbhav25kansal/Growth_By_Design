@@ -1,4 +1,5 @@
 import { ButtonHTMLAttributes, ReactNode } from 'react';
+import { cn } from '@/frontend/utils';
 
 interface UIButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
@@ -31,10 +32,8 @@ export default function UIButton({
     lg: 'px-6 py-3 text-lg',
   };
 
-  const classes = `${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`;
-
   return (
-    <button className={classes} {...props}>
+    <button className={cn(baseClasses, variants[variant], sizes[size], className)} {...props}>
       {children}
     </button>
   );

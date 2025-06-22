@@ -1,11 +1,5 @@
 import { NextResponse } from 'next/server';
-
-// Mock data - in a real app, this would come from a database
-const users = [
-  { id: 1, name: 'Alice Johnson', email: 'alice@example.com' },
-  { id: 2, name: 'Bob Smith', email: 'bob@example.com' },
-  { id: 3, name: 'Charlie Brown', email: 'charlie@example.com' },
-];
+import { UserService } from '@/backend/services/userService';
 
 export async function GET(
   request: Request,
@@ -14,7 +8,15 @@ export async function GET(
   try {
     const resolvedParams = await params;
     const userId = parseInt(resolvedParams.userId);
-    const user = users.find(u => u.id === userId);
+    
+    if (isNaN(userId)) {
+      return NextResponse.json(
+        { error: 'Invalid user ID' },
+        { status: 400 }
+      );
+    }
+
+    const user = await UserService.getUserById(userId);
 
     if (!user) {
       return NextResponse.json(
@@ -24,9 +26,10 @@ export async function GET(
     }
 
     return NextResponse.json(user);
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error fetching user:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch user' },
+      { error: error.message || 'Failed to fetch user' },
       { status: 500 }
     );
   }
@@ -39,32 +42,38 @@ export async function PUT(
   try {
     const resolvedParams = await params;
     const userId = parseInt(resolvedParams.userId);
-    const userIndex = users.findIndex(u => u.id === userId);
+    
+    if (isNaN(userId)) {
+      return NextResponse.json(
+        { error: 'Invalid user ID' },
+        { status: 400 }
+      );
+    }
 
-    if (userIndex === -1) {
+    const body = await request.json();
+    const { name } = body;
+
+    if (!name) {
+      return NextResponse.json(
+        { error: 'Name is required' },
+        { status: 400 }
+      );
+    }
+
+    const updatedUser = await UserService.updateUser(userId, { name });
+
+    if (!updatedUser) {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
       );
     }
 
-    const body = await request.json();
-    const { name, email } = body;
-
-    if (!name || !email) {
-      return NextResponse.json(
-        { error: 'Name and email are required' },
-        { status: 400 }
-      );
-    }
-
-    // Update the user
-    users[userIndex] = { ...users[userIndex], name, email };
-
-    return NextResponse.json(users[userIndex]);
-  } catch (error) {
+    return NextResponse.json(updatedUser);
+  } catch (error: any) {
+    console.error('Error updating user:', error);
     return NextResponse.json(
-      { error: 'Failed to update user' },
+      { error: error.message || 'Failed to update user' },
       { status: 500 }
     );
   }
@@ -77,22 +86,33 @@ export async function DELETE(
   try {
     const resolvedParams = await params;
     const userId = parseInt(resolvedParams.userId);
-    const userIndex = users.findIndex(u => u.id === userId);
+    
+    if (isNaN(userId)) {
+      return NextResponse.json(
+        { error: 'Invalid user ID' },
+        { status: 400 }
+      );
+    }
 
-    if (userIndex === -1) {
+    const user = await UserService.getUserById(userId);
+    
+    if (!user) {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
       );
     }
 
-    // Remove the user
-    const deletedUser = users.splice(userIndex, 1)[0];
+    // Note: We don't have a delete method in UserService yet
+    // This would need to be implemented
+    const { db } = await import('@/backend/database/connection');
+    db.prepare('DELETE FROM users WHERE id = ?').run(userId);
 
-    return NextResponse.json(deletedUser);
-  } catch (error) {
+    return NextResponse.json(user);
+  } catch (error: any) {
+    console.error('Error deleting user:', error);
     return NextResponse.json(
-      { error: 'Failed to delete user' },
+      { error: error.message || 'Failed to delete user' },
       { status: 500 }
     );
   }

@@ -1,4 +1,4 @@
-import { initializeDatabase } from './database';
+import { initializeDatabase } from './connection';
 
 // This module automatically initializes the database when imported
 // This ensures the database is set up before any API routes or server components try to use it

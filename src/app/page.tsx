@@ -1,67 +1,99 @@
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Growth By Design App
-        </p>
-      </div>
+    <>
+      {/* Hero Billboard */}
+      <section className="billboard bg-paper">
+        <div className="wrap">
+          <h1 className="headline">Growth By Design</h1>
+          <p className="eyebrow" style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
+            Transform your business with data-driven growth strategies
+          </p>
+          
+          <div className="cta" style={{ marginBottom: '4rem' }}>
+            <a href="/get-started" style={{ marginRight: '2rem' }}>
+              Get started
+              <svg viewBox="0 0 16 16" fill="currentColor">
+                <path d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+              </svg>
+            </a>
+            <a href="/dashboard">
+              View dashboard
+              <svg viewBox="0 0 16 16" fill="currentColor">
+                <path d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+              </svg>
+            </a>
+          </div>
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:translate-y-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <h1 className="text-4xl font-bold">
-          Welcome to Growth By Design
-        </h1>
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <div className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30">
-          <h2 className="mb-3 text-2xl font-semibold">
-            API Ready{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Your backend API endpoints are ready to use at /api/*
+          <p className="body-text">
+            Leverage advanced analytics and proven frameworks to accelerate your business growth. 
+            Our platform helps you identify opportunities, optimize performance, and scale sustainably.
           </p>
         </div>
+      </section>
 
-        <div className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30">
-          <h2 className="mb-3 text-2xl font-semibold">
-            TypeScript{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
+      {/* Secondary Billboard */}
+      <section className="billboard bg-frost">
+        <div className="wrap">
+          <h2 className="headline" style={{ fontSize: 'clamp(1.8rem, 4vw + 1rem, 3rem)' }}>
+            Data-Driven Insights
           </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Fully typed with TypeScript for better development experience.
+          <p className="eyebrow" style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
+            Make informed decisions with comprehensive analytics
           </p>
+          
+          <div className="cta">
+            <a href="/get-started">
+              Explore features
+              <svg viewBox="0 0 16 16" fill="currentColor">
+                <path d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+              </svg>
+            </a>
+          </div>
         </div>
+      </section>
 
-        <div className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30">
-          <h2 className="mb-3 text-2xl font-semibold">
-            Tailwind CSS{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Styled with Tailwind CSS for rapid UI development.
-          </p>
+      {/* Grid Section */}
+      <section style={{ padding: 'clamp(4rem, 8vw, 8rem) 0' }}>
+        <div className="wrap">
+          <div className="grid-2up">
+            <div className="grid-tile">
+              <h3 style={{ fontSize: 'var(--text-xl)', fontWeight: '600', marginBottom: '1rem' }}>
+                Growth Analytics
+              </h3>
+              <p className="body-text" style={{ fontSize: 'var(--text-sm)', opacity: '0.8' }}>
+                Track key metrics and identify growth opportunities with advanced analytics dashboards.
+              </p>
+            </div>
+            
+            <div className="grid-tile">
+              <h3 style={{ fontSize: 'var(--text-xl)', fontWeight: '600', marginBottom: '1rem' }}>
+                Strategic Planning
+              </h3>
+              <p className="body-text" style={{ fontSize: 'var(--text-sm)', opacity: '0.8' }}>
+                Develop data-backed strategies to optimize your business performance and scale effectively.
+              </p>
+            </div>
+            
+            <div className="grid-tile">
+              <h3 style={{ fontSize: 'var(--text-xl)', fontWeight: '600', marginBottom: '1rem' }}>
+                Performance Monitoring
+              </h3>
+              <p className="body-text" style={{ fontSize: 'var(--text-sm)', opacity: '0.8' }}>
+                Monitor your progress with real-time insights and actionable recommendations.
+              </p>
+            </div>
+            
+            <div className="grid-tile">
+              <h3 style={{ fontSize: 'var(--text-xl)', fontWeight: '600', marginBottom: '1rem' }}>
+                Expert Guidance
+              </h3>
+              <p className="body-text" style={{ fontSize: 'var(--text-sm)', opacity: '0.8' }}>
+                Get personalized recommendations based on industry best practices and proven methodologies.
+              </p>
+            </div>
+          </div>
         </div>
-
-        <div className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30">
-          <h2 className="mb-3 text-2xl font-semibold">
-            Scalable{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50 text-balance">
-            Well-organized structure that grows with your application.
-          </p>
-        </div>
-      </div>
-    </main>
+      </section>
+    </>
   )
 } 

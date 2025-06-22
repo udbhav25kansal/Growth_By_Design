@@ -53,7 +53,6 @@ export default function DashboardPage() {
       if (response.ok) {
         const result = await response.json();
         setValidationResult(result);
-        // Store the validation result for narrative generation
         localStorage.setItem('lastAlignment', JSON.stringify(result));
       } else {
         console.error('Validation failed');
@@ -91,122 +90,284 @@ export default function DashboardPage() {
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading dashboard...</div>
-      </div>
+      <section className="billboard bg-paper">
+        <div className="wrap">
+          <p className="body-text" style={{ opacity: 0.6 }}>Loading dashboard...</p>
+        </div>
+      </section>
     );
   }
 
   const { stage, goal, mrr, churn, conversion } = data;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <h1 className="text-4xl font-bold text-gray-900 mb-8">
-          {stage}-stage: {goal}
-        </h1>
-
-        {/* Metrics Panel */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="text-3xl font-bold text-green-600">
-              ${mrr}
-            </div>
-            <div className="text-gray-600 mt-2">MRR</div>
-          </div>
-          
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="text-3xl font-bold text-red-600">
-              {churn}%
-            </div>
-            <div className="text-gray-600 mt-2">Churn</div>
-          </div>
-          
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="text-3xl font-bold text-blue-600">
-              {conversion}%
-            </div>
-            <div className="text-gray-600 mt-2">Conversion</div>
-          </div>
+    <>
+      {/* Hero Section */}
+      <section className="billboard bg-paper">
+        <div className="wrap">
+          <h1 className="headline">{stage} Stage</h1>
+          <p className="eyebrow" style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
+            {goal}
+          </p>
         </div>
+      </section>
 
-        {/* High Churn Alert */}
-        {parseFloat(churn) > 30 && (
-          <div className="alert bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-8">
-            ⚠️ High churn
+      {/* Metrics Section */}
+      <section style={{ paddingBlock: 'clamp(4rem, 8vw, 6rem)' }}>
+        <div className="wrap">
+          <div className="grid-2up" style={{ gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
+            <div style={{
+              backgroundColor: 'var(--frost)',
+              borderRadius: 'var(--radius)',
+              padding: '2rem',
+              textAlign: 'center',
+              boxShadow: 'var(--shadow)'
+            }}>
+              <div style={{
+                fontSize: 'var(--text-4xl)',
+                fontWeight: '900',
+                color: '#10b981',
+                marginBottom: '0.5rem'
+              }}>
+                ${mrr}
+              </div>
+              <div className="caption" style={{ fontSize: 'var(--text-sm)', fontWeight: '500' }}>
+                Monthly Recurring Revenue
+              </div>
+            </div>
+            
+            <div style={{
+              backgroundColor: 'var(--frost)',
+              borderRadius: 'var(--radius)',
+              padding: '2rem',
+              textAlign: 'center',
+              boxShadow: 'var(--shadow)'
+            }}>
+              <div style={{
+                fontSize: 'var(--text-4xl)',
+                fontWeight: '900',
+                color: '#ef4444',
+                marginBottom: '0.5rem'
+              }}>
+                {churn}%
+              </div>
+              <div className="caption" style={{ fontSize: 'var(--text-sm)', fontWeight: '500' }}>
+                Churn Rate
+              </div>
+            </div>
+            
+            <div style={{
+              backgroundColor: 'var(--frost)',
+              borderRadius: 'var(--radius)',
+              padding: '2rem',
+              textAlign: 'center',
+              boxShadow: 'var(--shadow)',
+              gridColumn: 'span 1'
+            }}>
+              <div style={{
+                fontSize: 'var(--text-4xl)',
+                fontWeight: '900',
+                color: 'var(--link-blue)',
+                marginBottom: '0.5rem'
+              }}>
+                {conversion}%
+              </div>
+              <div className="caption" style={{ fontSize: 'var(--text-sm)', fontWeight: '500' }}>
+                Conversion Rate
+              </div>
+            </div>
           </div>
-        )}
 
-        {/* Align & Validate Action Checker */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Align & Validate</h2>
+          {/* High Churn Alert */}
+          {parseFloat(churn) > 30 && (
+            <div style={{
+              marginTop: '2rem',
+              padding: '1rem 1.5rem',
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: 'var(--radius)',
+              color: '#dc2626',
+              fontSize: 'var(--text-sm)',
+              fontWeight: '500'
+            }}>
+              ⚠️ High churn rate detected
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Action Validation Section */}
+      <section className="billboard bg-frost">
+        <div className="wrap">
+          <h2 className="headline" style={{ fontSize: 'clamp(1.8rem, 4vw + 1rem, 2.5rem)' }}>
+            Align & Validate
+          </h2>
+          <p className="eyebrow" style={{ marginTop: '1.5rem', marginBottom: '3rem' }}>
+            Check if your proposed actions align with your growth metrics
+          </p>
           
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="actionText" className="block text-sm font-medium text-gray-700 mb-2">
+          <div style={{ maxWidth: '640px', margin: '0 auto', textAlign: 'left' }}>
+            <div style={{ marginBottom: '2rem' }}>
+              <label style={{
+                display: 'block',
+                fontSize: 'var(--text-sm)',
+                fontWeight: '600',
+                marginBottom: '0.5rem',
+                color: 'var(--ink)'
+              }}>
                 Proposed Action
               </label>
               <textarea
-                id="actionText"
                 value={actionText}
                 onChange={(e) => setActionText(e.target.value)}
-                className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500"
+                className="form-input"
+                style={{
+                  width: '100%',
+                  minHeight: '120px',
+                  resize: 'vertical',
+                  fontFamily: 'inherit'
+                }}
                 placeholder="Describe the action you're considering..."
+                spellCheck={false}
+                suppressHydrationWarning
               />
             </div>
             
-            <button
-              onClick={handleValidateAction}
-              disabled={!actionText.trim() || isValidating}
-              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              {isValidating ? 'Checking...' : 'Check'}
-            </button>
+            <div className="cta" style={{ marginBottom: '2rem' }}>
+              <button
+                onClick={handleValidateAction}
+                disabled={!actionText.trim() || isValidating}
+                style={{
+                  background: (!actionText.trim() || isValidating) ? 'var(--caption-gray)' : 'var(--link-blue)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px 24px',
+                  fontSize: 'var(--text-base)',
+                  fontWeight: '500',
+                  cursor: (!actionText.trim() || isValidating) ? 'not-allowed' : 'pointer',
+                  transition: 'background-color 0.2s var(--ease)'
+                }}
+                onMouseOver={(e) => {
+                  if (actionText.trim() && !isValidating) {
+                    e.currentTarget.style.background = 'var(--link-blue-hover)';
+                  }
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = (!actionText.trim() || isValidating) ? 'var(--caption-gray)' : 'var(--link-blue)';
+                }}
+              >
+                {isValidating ? 'Checking...' : 'Check Alignment'}
+              </button>
+            </div>
 
             {/* Validation Results */}
             {validationResult && (
-              <div className="mt-6 p-4 bg-gray-50 rounded-md">
-                <div className="mb-3">
-                  <span className="font-semibold text-gray-700">Alignment: </span>
-                  <span className={`font-bold ${
-                    validationResult.alignment.includes('High') ? 'text-green-600' :
-                    validationResult.alignment.includes('Medium') ? 'text-yellow-600' :
-                    'text-red-600'
-                  }`}>
+              <div style={{
+                padding: '1.5rem',
+                backgroundColor: 'var(--paper)',
+                borderRadius: 'var(--radius)',
+                boxShadow: 'var(--shadow)'
+              }}>
+                <div style={{ marginBottom: '1rem' }}>
+                  <span style={{ fontSize: 'var(--text-sm)', fontWeight: '600', color: 'var(--ink)' }}>
+                    Alignment: 
+                  </span>
+                  <span style={{
+                    fontSize: 'var(--text-sm)',
+                    fontWeight: '700',
+                    marginLeft: '0.5rem',
+                    color: validationResult.alignment.includes('High') ? '#10b981' :
+                           validationResult.alignment.includes('Medium') ? '#f59e0b' : '#ef4444'
+                  }}>
                     {validationResult.alignment}
                   </span>
                 </div>
                 <div>
-                  <span className="font-semibold text-gray-700">Suggestion: </span>
-                  <span className="text-gray-800">{validationResult.suggestion}</span>
+                  <span style={{ fontSize: 'var(--text-sm)', fontWeight: '600', color: 'var(--ink)' }}>
+                    Suggestion: 
+                  </span>
+                  <span style={{ fontSize: 'var(--text-sm)', color: 'var(--ink)', marginLeft: '0.5rem' }}>
+                    {validationResult.suggestion}
+                  </span>
                 </div>
               </div>
             )}
           </div>
         </div>
+      </section>
 
-        {/* Build Narrative Section */}
-        <div className="mt-8 bg-white p-6 rounded-lg shadow-sm border">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Investor Narrative</h2>
-          
-          <button
-            onClick={generateNarrative}
-            className="mt-6 bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700"
-          >
-            Build Narrative
-          </button>
-          
-          {narrative && (
-            <textarea
-              readOnly
-              value={narrative}
-              className="mt-4 w-full h-48 border rounded p-2 bg-gray-50 text-gray-800"
-              placeholder="Your investor narrative will appear here..."
-            />
-          )}
+      {/* Narrative Section */}
+      <section style={{ paddingBlock: 'clamp(4rem, 8vw, 8rem)' }}>
+        <div className="wrap">
+          <div style={{ maxWidth: '640px', margin: '0 auto', textAlign: 'center' }}>
+            <h2 style={{
+              fontSize: 'clamp(1.8rem, 4vw + 1rem, 2.5rem)',
+              fontWeight: '900',
+              marginBottom: '1.5rem'
+            }}>
+              Investor Narrative
+            </h2>
+            <p className="body-text" style={{ marginBottom: '2rem', opacity: 0.8 }}>
+              Generate a compelling narrative for investors based on your metrics and validated actions
+            </p>
+            
+            <div className="cta" style={{ marginBottom: '2rem' }}>
+              <button
+                onClick={generateNarrative}
+                style={{
+                  background: 'var(--link-blue)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px 24px',
+                  fontSize: 'var(--text-base)',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s var(--ease)'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = 'var(--link-blue-hover)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = 'var(--link-blue)';
+                }}
+              >
+                Build Narrative
+              </button>
+            </div>
+            
+            {narrative && (
+              <div style={{
+                backgroundColor: 'var(--frost)',
+                borderRadius: 'var(--radius)',
+                padding: '2rem',
+                textAlign: 'left',
+                boxShadow: 'var(--shadow)'
+              }}>
+                <textarea
+                  readOnly
+                  value={narrative}
+                  style={{
+                    width: '100%',
+                    minHeight: '200px',
+                    border: 'none',
+                    background: 'transparent',
+                    fontSize: 'var(--text-base)',
+                    fontFamily: 'inherit',
+                    color: 'var(--ink)',
+                    resize: 'vertical',
+                    outline: 'none'
+                  }}
+                  placeholder="Your investor narrative will appear here..."
+                  spellCheck={false}
+                  suppressHydrationWarning
+                />
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </>
   );
 } 
