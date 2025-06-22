@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export default function Navigation() {
+export default function AppHeader() {
   const pathname = usePathname();
 
   return (
-    <nav className="bg-white border-b border-gray-200 shadow-sm">
+    <header className="bg-white border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo/Brand */}
@@ -19,7 +19,7 @@ export default function Navigation() {
           </Link>
 
           {/* Navigation Links */}
-          <div className="flex space-x-8">
+          <nav className="flex space-x-8" role="navigation" aria-label="Main navigation">
             <Link
               href="/"
               className={`text-sm font-medium transition-colors ${
@@ -49,9 +49,9 @@ export default function Navigation() {
             >
               Start Now
             </Link>
-          </div>
+          </nav>
         </div>
       </div>
-    </nav>
+    </header>
   );
 } 

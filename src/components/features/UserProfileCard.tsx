@@ -4,13 +4,17 @@ interface User {
   email: string;
 }
 
-interface UserCardProps {
+interface UserProfileCardProps {
   user: User;
   onEdit?: (user: User) => void;
   onDelete?: (userId: number) => void;
 }
 
-export default function UserCard({ user, onEdit, onDelete }: UserCardProps) {
+/**
+ * UserProfileCard - Displays user information with optional edit/delete actions
+ * Used for displaying user profiles in lists or dashboards
+ */
+export default function UserProfileCard({ user, onEdit, onDelete }: UserProfileCardProps) {
   return (
     <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
       <div className="flex items-center justify-between">
