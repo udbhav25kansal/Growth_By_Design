@@ -20,6 +20,7 @@ export default function DashboardPage() {
   const [actionText, setActionText] = useState('');
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [isValidating, setIsValidating] = useState(false);
+  const [narrative, setNarrative] = useState<string>('');
 
   useEffect(() => {
     const raw = window.localStorage.getItem("onboardingData");
@@ -52,6 +53,8 @@ export default function DashboardPage() {
       if (response.ok) {
         const result = await response.json();
         setValidationResult(result);
+        // Store the validation result for narrative generation
+        localStorage.setItem('lastAlignment', JSON.stringify(result));
       } else {
         console.error('Validation failed');
       }
@@ -59,6 +62,30 @@ export default function DashboardPage() {
       console.error('Error validating action:', error);
     } finally {
       setIsValidating(false);
+    }
+  };
+
+  const generateNarrative = async () => {
+    if (!data) return;
+
+    try {
+      const onboarding = JSON.parse(localStorage.getItem("onboardingData") || '{}');
+      const lastCheck = JSON.parse(localStorage.getItem("lastAlignment") || '{}');
+      
+      const res = await fetch("/api/narrative", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ onboarding, lastCheck }),
+      });
+      
+      if (res.ok) {
+        const { narrative } = await res.json();
+        setNarrative(narrative);
+      } else {
+        console.error('Failed to generate narrative');
+      }
+    } catch (error) {
+      console.error('Error generating narrative:', error);
     }
   };
 
@@ -157,6 +184,27 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Build Narrative Section */}
+        <div className="mt-8 bg-white p-6 rounded-lg shadow-sm border">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Investor Narrative</h2>
+          
+          <button
+            onClick={generateNarrative}
+            className="mt-6 bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700"
+          >
+            Build Narrative
+          </button>
+          
+          {narrative && (
+            <textarea
+              readOnly
+              value={narrative}
+              className="mt-4 w-full h-48 border rounded p-2 bg-gray-50 text-gray-800"
+              placeholder="Your investor narrative will appear here..."
+            />
+          )}
         </div>
       </div>
     </div>
