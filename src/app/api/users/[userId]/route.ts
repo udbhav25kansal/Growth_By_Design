@@ -7,16 +7,13 @@ const users = [
   { id: 3, name: 'Charlie Brown', email: 'charlie@example.com' },
 ];
 
-type Params = {
-  userId: string;
-};
-
 export async function GET(
   request: Request,
-  { params }: { params: Params }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const userId = parseInt(params.userId);
+    const resolvedParams = await params;
+    const userId = parseInt(resolvedParams.userId);
     const user = users.find(u => u.id === userId);
 
     if (!user) {
@@ -37,10 +34,11 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: Params }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const userId = parseInt(params.userId);
+    const resolvedParams = await params;
+    const userId = parseInt(resolvedParams.userId);
     const userIndex = users.findIndex(u => u.id === userId);
 
     if (userIndex === -1) {
@@ -74,10 +72,11 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Params }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const userId = parseInt(params.userId);
+    const resolvedParams = await params;
+    const userId = parseInt(resolvedParams.userId);
     const userIndex = users.findIndex(u => u.id === userId);
 
     if (userIndex === -1) {
