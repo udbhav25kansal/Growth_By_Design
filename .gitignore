@@ -33,4 +33,22 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts 
+next-env.d.ts
+
+# SQLite database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Package manager artifacts
+package-lock.json.bak
+.npm
+.pnpm-debug.log*
+.pnpm-store/
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~ 
