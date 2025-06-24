@@ -77,6 +77,26 @@ const migrations = [
       CREATE INDEX IF NOT EXISTS idx_checks_status ON checks(check_status);
       CREATE INDEX IF NOT EXISTS idx_checks_created_at ON checks(created_at);
     `
+  },
+  {
+    name: '002_auth_and_documents',
+    sql: `
+      -- Add password_hash column for authentication (if it doesn't yet exist)
+      ALTER TABLE users ADD COLUMN password_hash TEXT;
+
+      -- Documents table stores file uploads linked to a user
+      CREATE TABLE IF NOT EXISTS documents (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        filename TEXT NOT NULL,
+        filepath TEXT NOT NULL,
+        uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        metadata TEXT,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id);
+    `
   }
 ];
 
@@ -149,7 +169,7 @@ const createQueries = () => {
   
   return {
     // Users
-    createUser: db.prepare('INSERT INTO users (email, name) VALUES (?, ?) RETURNING *'),
+    createUser: db.prepare('INSERT INTO users (email, name, password_hash) VALUES (?, ?, ?) RETURNING *'),
     getUserById: db.prepare('SELECT * FROM users WHERE id = ?'),
     getUserByEmail: db.prepare('SELECT * FROM users WHERE email = ?'),
     updateUser: db.prepare('UPDATE users SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *'),

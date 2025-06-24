@@ -1,9 +1,12 @@
 import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
 import './globals.css'
 import { AppHeader } from '@/frontend/components'
 
 // Initialize database on app startup
 import '@/backend/database/init'
+
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Growth By Design App',
@@ -17,9 +20,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
+      <body className={inter.className}>
         <AppHeader />
-        {children}
+        <main>{children}</main>
       </body>
     </html>
   )

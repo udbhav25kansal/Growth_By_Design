@@ -7,64 +7,71 @@ export default function AppHeader() {
   const pathname = usePathname();
 
   return (
-    <header className="nav-blur">
-      <div className="wrap">
-        <nav className="flex items-center justify-between h-11" role="navigation" aria-label="Main navigation">
-          {/* Logo/Brand - Center aligned like Apple */}
-          <div className="flex-1" />
-          
+    <header className="bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo/Brand */}
           <Link 
             href="/"
-            className="text-white text-sm font-medium tracking-tight hover:opacity-80 transition-opacity duration-300"
+            className="flex items-center space-x-2"
           >
-            Growth By Design
-          </Link>
-          
-          <div className="flex-1 flex justify-end">
-            {/* Navigation Links */}
-            <div className="flex items-center space-x-8">
-              <Link
-                href="/"
-                className={`text-xs font-normal text-white hover:opacity-80 transition-opacity duration-300 ${
-                  pathname === "/" ? "opacity-100" : "opacity-70"
-                }`}
-              >
-                Home
-              </Link>
-              
-              <Link
-                href="/get-started"
-                className={`text-xs font-normal text-white hover:opacity-80 transition-opacity duration-300 ${
-                  pathname === "/get-started" ? "opacity-100" : "opacity-70"
-                }`}
-              >
-                Get Started
-              </Link>
-
-              <Link
-                href="/dashboard"
-                className={`text-xs font-normal text-white hover:opacity-80 transition-opacity duration-300 ${
-                  pathname === "/dashboard" ? "opacity-100" : "opacity-70"
-                }`}
-              >
-                Dashboard
-              </Link>
-
-              {/* Shopping bag icon placeholder - Apple style */}
-              <button 
-                className="text-white opacity-70 hover:opacity-100 transition-opacity duration-300"
-                aria-label="Menu"
-              >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path 
-                    d="M11.5 4H2.5L1 1H0V0H1.5L3 3H12L11.5 4ZM3.5 5H10.5L10 9H4L3.5 5ZM4 11C4.55228 11 5 11.4477 5 12C5 12.5523 4.55228 13 4 13C3.44772 13 3 12.5523 3 12C3 11.4477 3.44772 11 4 11ZM10 11C10.5523 11 11 11.4477 11 12C11 12.5523 10.5523 13 10 13C9.44772 13 9 12.5523 9 12C9 11.4477 9.44772 11 10 11Z" 
-                    fill="currentColor"
-                  />
-                </svg>
-              </button>
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">G</span>
             </div>
-          </div>
-        </nav>
+            <span className="text-xl font-bold text-gray-900">Growth By Design</span>
+          </Link>
+
+          {/* Navigation Links */}
+          <nav className="hidden md:flex items-center space-x-8" role="navigation" aria-label="Main navigation">
+            <Link
+              href="/"
+              className={`text-sm font-medium transition-colors ${
+                pathname === "/" 
+                  ? "text-blue-600" 
+                  : "text-gray-700 hover:text-blue-600"
+              }`}
+            >
+              Home
+            </Link>
+            
+            <Link
+              href="/get-started"
+              className={`text-sm font-medium transition-colors ${
+                pathname === "/get-started" 
+                  ? "text-blue-600" 
+                  : "text-gray-700 hover:text-blue-600"
+              }`}
+            >
+              Get Started
+            </Link>
+
+            <Link
+              href="/dashboard"
+              className={`text-sm font-medium transition-colors ${
+                pathname === "/dashboard" 
+                  ? "text-blue-600" 
+                  : "text-gray-700 hover:text-blue-600"
+              }`}
+            >
+              Dashboard
+            </Link>
+
+            {/* CTA Button */}
+            <Link
+              href="/get-started"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-full text-sm font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+            >
+              Get Started
+            </Link>
+          </nav>
+
+          {/* Mobile menu button */}
+          <button className="md:hidden p-2 rounded-md text-gray-700 hover:text-blue-600">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
       </div>
     </header>
   );

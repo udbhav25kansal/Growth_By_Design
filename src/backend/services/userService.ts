@@ -4,6 +4,7 @@ export interface User {
   id: number;
   email: string;
   name: string;
+  password_hash: string;
   created_at: string;
   updated_at: string;
 }
@@ -11,6 +12,7 @@ export interface User {
 export interface CreateUserData {
   email: string;
   name: string;
+  password_hash?: string;
 }
 
 export interface UpdateUserData {
@@ -21,7 +23,8 @@ export class UserService {
   static async createUser(userData: CreateUserData): Promise<User> {
     try {
       const { db } = await import('../database/connection');
-      const result = db.prepare('INSERT INTO users (email, name) VALUES (?, ?) RETURNING *').get(userData.email, userData.name) as User;
+      const passwordHash = userData.password_hash ?? '';
+      const result = db.prepare('INSERT INTO users (email, name, password_hash) VALUES (?, ?, ?) RETURNING *').get(userData.email, userData.name, passwordHash) as User;
       return result;
     } catch (error: any) {
       if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
