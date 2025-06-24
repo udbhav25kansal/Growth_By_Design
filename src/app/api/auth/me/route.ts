@@ -10,13 +10,7 @@ export async function GET(req: Request) {
     const token = cookieStore.get('auth')?.value;
     
     if (!token) {
-      // For testing purposes, return a default user when no token is present
-      console.log('No auth token found, returning default test user');
-      return NextResponse.json({ 
-        id: 1, 
-        email: 'test@example.com', 
-        name: 'Test User' 
-      });
+      return NextResponse.json({ error: 'No authentication token' }, { status: 401 });
     }
 
     const secret = process.env.JWT_SECRET ?? 'dev_secret_key';
@@ -26,17 +20,13 @@ export async function GET(req: Request) {
 
     const user = await UserService.getUserById(payload.id);
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      // If the user no longer exists, treat as unauthenticated
+      return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
     }
 
     return NextResponse.json({ id: user.id, email: user.email, name: user.name });
   } catch (error: any) {
     console.error('Me error:', error);
-    // Return default user instead of error for testing
-    return NextResponse.json({ 
-      id: 1, 
-      email: 'test@example.com', 
-      name: 'Test User' 
-    });
+    return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
   }
 } 

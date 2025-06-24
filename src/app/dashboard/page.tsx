@@ -102,17 +102,17 @@ export default function DashboardPage() {
         const response = await fetch('/api/auth/me');
         if (response.ok) {
           const userData = await response.json();
-          setUser(userData); // The API returns user data directly, not nested in a 'user' property
+          setUser(userData);
           console.log('User authenticated:', userData);
         } else {
-          console.error('Authentication failed, but continuing with fallback');
-          // For testing, we'll continue without redirecting
-          setUser({ id: 1, email: 'test@example.com', name: 'Test User' });
+          console.error('Authentication failed, redirecting to login');
+          window.location.href = '/login';
+          return;
         }
       } catch (error) {
         console.error('Error checking authentication:', error);
-        // For testing, we'll continue without redirecting
-        setUser({ id: 1, email: 'test@example.com', name: 'Test User' });
+        window.location.href = '/login';
+        return;
       }
     };
 
