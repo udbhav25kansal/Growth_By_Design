@@ -56,14 +56,14 @@ export async function POST(req: NextRequest) {
     // Create or get session
     let currentSessionId = sessionId ? parseInt(sessionId) : null
     if (!currentSessionId) {
-      const session = await ProblemFramingService.createSession(parseInt(userId), 'CRM Data Analysis')
+      const session = await ProblemFramingService.createSession(parseInt(userId), 'Product Analytics Analysis')
       currentSessionId = session.id
     }
 
     // Save uploaded file to database
     const uploadedFile = await ProblemFramingService.saveUploadedFile(
       currentSessionId,
-      'crm_data',
+      'product_analytics',
       file,
       extractedText,
       undefined, // file_path - we're not storing files physically for now
@@ -81,18 +81,41 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Build the prompt for OpenAI to frame the real problem
-    const prompt = `You are a senior SaaS growth consultant. Your task is to identify the REAL underlying problems revealed in the startup's CRM data.
+    // Build the prompt for OpenAI to analyze product analytics patterns
+    const prompt = `You are a senior product analytics strategist and startup growth consultant. Your task is to analyze product analytics data to identify the REAL underlying problems affecting startup product performance and user experience.
 
 Instructions:
-1. Carefully review the CRM excerpts below (deal win/loss, lost reasons, funnel metrics).
-2. Synthesize the evidence to articulate the single most critical underlying problem in one concise sentence.
-3. List the top three root causes contributing to this problem (bullet format).
-4. Provide one actionable recommendation to address the biggest root cause.
+1. Carefully review the product analytics data below (onboarding funnels, user behavior patterns, heatmaps, screen recordings, support tickets).
+2. Identify critical drop-off points, user friction areas, feature adoption issues, and conversion bottlenecks.
+3. Focus on finding the root cause problems, not just surface-level symptoms.
 
-CRM DATA BEGIN
+Please provide your analysis in this exact format:
+
+**CORE PROBLEM:**
+[One clear sentence describing the most critical underlying product problem]
+
+**ROOT CAUSES:**
+• [First root cause related to product experience]
+• [Second root cause related to user journey] 
+• [Third root cause related to feature adoption]
+
+**PRIMARY RECOMMENDATION:**
+[One specific, actionable product improvement to address the biggest root cause]
+
+**MOST AFFECTED STAGE:**
+[User journey stage most impacted - e.g., onboarding, activation, engagement]
+
+**KEY METRICS TO TRACK:**
+• [First key metric to measure improvement]
+• [Second key metric to measure improvement]
+• [Third key metric to measure improvement]
+
+**SUPPORTING EVIDENCE:**
+[Key data points, patterns, or analytics insights that support your analysis]
+
+PRODUCT ANALYTICS DATA BEGIN
 ${extractedText}
-CRM DATA END`
+PRODUCT ANALYTICS DATA END`
 
     const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -101,9 +124,9 @@ CRM DATA END`
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-4',
         temperature: 0.3,
-        max_tokens: 400,
+        max_tokens: 600,
         messages: [
           { role: 'system', content: 'You are a helpful assistant.' },
           { role: 'user', content: prompt },
@@ -119,20 +142,23 @@ CRM DATA END`
     const rawResponse: string = openaiJson.choices?.[0]?.message?.content?.trim() || ''
     const processingTime = Date.now() - startTime
 
+    // Parse the structured response (this prompt returns markdown format, not JSON)
+    const parsedAnalysis = ProblemFramingService.parseStructuredResponse(rawResponse, 'product_analytics')
+
     // Save AI analysis to database
     const analysisResult = await ProblemFramingService.saveAnalysisResult(
       uploadedFile.id,
-      'crm_data',
-      'gpt-4o',
+      'product_analytics',
+      'gpt-4',
       rawResponse,
       {
-        coreProblem: rawResponse, // For CRM data, the whole response is the core problem analysis
-        rootCauses: [], // Would need to parse from response
-        primaryRecommendation: rawResponse, // Would need to parse from response
-        mostAffectedSegment: undefined, // Not applicable for CRM data
-        mostAffectedStage: undefined, // Not applicable for CRM data
-        keyMetricsToTrack: undefined, // Not specified in this prompt
-        supportingEvidence: undefined // Not structured in this prompt
+        coreProblem: parsedAnalysis.coreProblem || rawResponse,
+        rootCauses: parsedAnalysis.rootCauses || [],
+        primaryRecommendation: parsedAnalysis.primaryRecommendation,
+        mostAffectedSegment: undefined, // Not specifically tracked in product analytics
+        mostAffectedStage: parsedAnalysis.mostAffectedStage,
+        keyMetricsToTrack: parsedAnalysis.keyMetricsToTrack || [],
+        supportingEvidence: parsedAnalysis.supportingEvidence
       },
       {
         promptVersion: '1.0',
@@ -149,7 +175,7 @@ CRM DATA END`
       analysisId: analysisResult.id
     })
   } catch (error: any) {
-    console.error('Problem Frame Agent error:', error)
+    console.error('Product Analytics Agent error:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 } 

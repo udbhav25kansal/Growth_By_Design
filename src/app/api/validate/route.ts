@@ -7,12 +7,14 @@ interface ValidationRequest {
     churn: string;
     conversion: string;
   };
+  goal?: string;
+  stage?: string;
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body: ValidationRequest = await request.json();
-    const { actionText, metrics } = body;
+    const { actionText, metrics, goal, stage } = body;
 
     if (!actionText || !metrics) {
       return NextResponse.json(
@@ -35,8 +37,33 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Build the prompt for OpenAI
-    const prompt = `You are a startup coach. Given these metrics: MRR=${metrics.mrr}, churn=${metrics.churn}%, conversion=${metrics.conversion}%, evaluate this proposed action: "${actionText}". Respond with: 1) a one-sentence Alignment verdict (Low/Medium/High), 2) one suggestion to improve it.`;
+    // Build the expert-level prompt for OpenAI with comprehensive context
+    const goalContext = goal ? ` Their primary business goal is: "${goal}".` : '';
+    const stageContext = stage ? ` They are a ${stage}-stage startup.` : '';
+    
+    const prompt = `You are a senior startup coach and Go-To-Market engineer with 15+ years of experience scaling SaaS companies from seed to IPO.${stageContext}${goalContext}
+
+CURRENT METRICS ANALYSIS:
+- Monthly Recurring Revenue: $${metrics.mrr}
+- Churn Rate: ${metrics.churn}%
+- Conversion Rate: ${metrics.conversion}%
+
+PROPOSED ACTION TO EVALUATE:
+"${actionText}"
+
+EXPERT VALIDATION FRAMEWORK:
+Analyze this action through multiple strategic lenses:
+
+1. GOAL ALIGNMENT: How well does this action directly support their stated business objective?
+2. STAGE APPROPRIATENESS: Is this the right move for their current funding/growth stage?
+3. METRIC IMPACT: Will this action positively influence their key metrics (MRR growth, churn reduction, conversion improvement)?
+4. RESOURCE EFFICIENCY: Does this action provide the highest ROI given their likely resource constraints?
+5. EXECUTION COMPLEXITY: Can they realistically execute this well with their current capabilities?
+6. MARKET TIMING: Is this action well-timed for their market position and competitive landscape?
+
+RESPONSE FORMAT:
+1) ALIGNMENT VERDICT: [High/Medium/Low] - One sentence explaining the strategic alignment score
+2) EXPERT RECOMMENDATION: Provide a specific, actionable improvement that leverages GTM best practices and addresses the biggest strategic gap in their proposed action`;
 
     // Call OpenAI API
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -46,15 +73,15 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-4',
         messages: [
           {
             role: 'user',
             content: prompt
           }
         ],
-        max_tokens: 200,
-        temperature: 0.7,
+        max_tokens: 400,
+        temperature: 0.3,
       }),
     });
 

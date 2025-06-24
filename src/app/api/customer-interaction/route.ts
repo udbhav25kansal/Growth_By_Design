@@ -56,14 +56,14 @@ export async function POST(req: NextRequest) {
     // Create or get session
     let currentSessionId = sessionId ? parseInt(sessionId) : null
     if (!currentSessionId) {
-      const session = await ProblemFramingService.createSession(parseInt(userId), 'CRM Data Analysis')
+      const session = await ProblemFramingService.createSession(parseInt(userId), 'Customer Interaction Analysis')
       currentSessionId = session.id
     }
 
     // Save uploaded file to database
     const uploadedFile = await ProblemFramingService.saveUploadedFile(
       currentSessionId,
-      'crm_data',
+      'customer_interaction',
       file,
       extractedText,
       undefined, // file_path - we're not storing files physically for now
@@ -81,18 +81,36 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Build the prompt for OpenAI to frame the real problem
-    const prompt = `You are a senior SaaS growth consultant. Your task is to identify the REAL underlying problems revealed in the startup's CRM data.
+    // Build the prompt for OpenAI to analyze customer interaction patterns
+    const prompt = `You are a senior customer success consultant specializing in SaaS growth. Your task is to identify the REAL underlying problems revealed in customer interaction data.
 
 Instructions:
-1. Carefully review the CRM excerpts below (deal win/loss, lost reasons, funnel metrics).
-2. Synthesize the evidence to articulate the single most critical underlying problem in one concise sentence.
-3. List the top three root causes contributing to this problem (bullet format).
-4. Provide one actionable recommendation to address the biggest root cause.
+1. Carefully analyze the customer interaction data below (call transcripts, support tickets, onboarding feedback, churn interviews).
+2. Identify behavior patterns and pain points that reveal deeper systemic issues.
+3. Focus on finding the root cause problems, not just surface-level complaints.
 
-CRM DATA BEGIN
+Please provide your analysis in this exact format:
+
+**CORE PROBLEM:**
+[One clear sentence describing the most critical underlying problem]
+
+**ROOT CAUSES:**
+• [First root cause]
+• [Second root cause] 
+• [Third root cause]
+
+**PRIMARY RECOMMENDATION:**
+[One specific, actionable recommendation to address the biggest root cause]
+
+**MOST AFFECTED SEGMENT:**
+[Which customer segment/persona is most impacted by this problem]
+
+**SUPPORTING EVIDENCE:**
+[Key quotes, patterns, or data points that support your analysis]
+
+CUSTOMER INTERACTION DATA BEGIN
 ${extractedText}
-CRM DATA END`
+CUSTOMER INTERACTION DATA END`
 
     const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -101,9 +119,9 @@ CRM DATA END`
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-4',
         temperature: 0.3,
-        max_tokens: 400,
+        max_tokens: 500,
         messages: [
           { role: 'system', content: 'You are a helpful assistant.' },
           { role: 'user', content: prompt },
@@ -119,20 +137,23 @@ CRM DATA END`
     const rawResponse: string = openaiJson.choices?.[0]?.message?.content?.trim() || ''
     const processingTime = Date.now() - startTime
 
+    // Parse the structured response (this prompt returns markdown format, not JSON)
+    const parsedAnalysis = ProblemFramingService.parseStructuredResponse(rawResponse, 'customer_interaction')
+
     // Save AI analysis to database
     const analysisResult = await ProblemFramingService.saveAnalysisResult(
       uploadedFile.id,
-      'crm_data',
-      'gpt-4o',
+      'customer_interaction',
+      'gpt-4',
       rawResponse,
       {
-        coreProblem: rawResponse, // For CRM data, the whole response is the core problem analysis
-        rootCauses: [], // Would need to parse from response
-        primaryRecommendation: rawResponse, // Would need to parse from response
-        mostAffectedSegment: undefined, // Not applicable for CRM data
-        mostAffectedStage: undefined, // Not applicable for CRM data
-        keyMetricsToTrack: undefined, // Not specified in this prompt
-        supportingEvidence: undefined // Not structured in this prompt
+        coreProblem: parsedAnalysis.coreProblem || rawResponse,
+        rootCauses: parsedAnalysis.rootCauses || [],
+        primaryRecommendation: parsedAnalysis.primaryRecommendation,
+        mostAffectedSegment: parsedAnalysis.mostAffectedSegment,
+        mostAffectedStage: undefined, // Not specifically tracked in customer interaction
+        keyMetricsToTrack: undefined, // Not specified in this prompt format
+        supportingEvidence: parsedAnalysis.supportingEvidence
       },
       {
         promptVersion: '1.0',
@@ -149,7 +170,7 @@ CRM DATA END`
       analysisId: analysisResult.id
     })
   } catch (error: any) {
-    console.error('Problem Frame Agent error:', error)
+    console.error('Customer Interaction Agent error:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 } 

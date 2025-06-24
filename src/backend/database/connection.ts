@@ -97,6 +97,121 @@ const migrations = [
 
       CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id);
     `
+  },
+  {
+    name: '003_problem_framing_agents',
+    sql: `
+      -- Insert default user for testing if not exists
+      INSERT OR IGNORE INTO users (id, email, name, password_hash) 
+      VALUES (1, 'test@example.com', 'Test User', 'test_hash');
+      
+      -- Problem Framing Sessions: Each analysis session by a user
+      CREATE TABLE IF NOT EXISTS problem_framing_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        session_name TEXT, -- Optional name given by user
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+      );
+
+      -- Uploaded Files: Store file metadata and content for each agent
+      CREATE TABLE IF NOT EXISTS uploaded_files (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id INTEGER NOT NULL,
+        agent_type TEXT NOT NULL CHECK (agent_type IN ('crm_data', 'customer_interaction', 'product_analytics')),
+        original_filename TEXT NOT NULL,
+        file_size INTEGER NOT NULL,
+        file_type TEXT NOT NULL, -- MIME type
+        file_extension TEXT NOT NULL, -- .pdf, .docx, etc.
+        file_path TEXT, -- Physical file storage path (optional)
+        extracted_text TEXT NOT NULL, -- Raw extracted text from file
+        text_length INTEGER NOT NULL, -- Length of extracted text
+        upload_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        metadata TEXT, -- JSON for additional file metadata
+        FOREIGN KEY (session_id) REFERENCES problem_framing_sessions (id) ON DELETE CASCADE
+      );
+
+      -- AI Analysis Results: Store structured AI responses
+      CREATE TABLE IF NOT EXISTS ai_analysis_results (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        file_id INTEGER NOT NULL,
+        agent_type TEXT NOT NULL CHECK (agent_type IN ('crm_data', 'customer_interaction', 'product_analytics')),
+        model_used TEXT NOT NULL, -- gpt-4o, gpt-4, etc.
+        prompt_version TEXT, -- Track prompt versions for analysis evolution
+        
+        -- Raw AI response
+        raw_response TEXT NOT NULL,
+        
+        -- Structured analysis fields (extracted from AI response)
+        core_problem TEXT,
+        root_causes TEXT, -- JSON array of root causes
+        primary_recommendation TEXT,
+        most_affected_segment TEXT, -- For customer interaction
+        most_affected_stage TEXT, -- For product analytics
+        key_metrics_to_track TEXT, -- JSON array for product analytics
+        supporting_evidence TEXT,
+        
+        -- Analysis metadata
+        analysis_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        processing_time_ms INTEGER, -- Time taken for AI analysis
+        token_usage TEXT, -- JSON with prompt/completion tokens
+        confidence_score REAL, -- Optional confidence score
+        
+        -- Quality and review
+        user_rating INTEGER CHECK (user_rating BETWEEN 1 AND 5), -- User feedback on analysis quality
+        user_notes TEXT, -- User's notes on the analysis
+        reviewed_at DATETIME,
+        
+        FOREIGN KEY (file_id) REFERENCES uploaded_files (id) ON DELETE CASCADE
+      );
+
+      -- Problem Patterns: Track recurring problems across analyses
+      CREATE TABLE IF NOT EXISTS problem_patterns (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        pattern_name TEXT NOT NULL,
+        pattern_description TEXT,
+        first_identified DATETIME DEFAULT CURRENT_TIMESTAMP,
+        last_seen DATETIME DEFAULT CURRENT_TIMESTAMP,
+        occurrence_count INTEGER DEFAULT 1,
+        severity_level TEXT CHECK (severity_level IN ('low', 'medium', 'high', 'critical')),
+        status TEXT DEFAULT 'active' CHECK (status IN ('active', 'resolved', 'monitoring')),
+        related_analyses TEXT, -- JSON array of analysis IDs that identified this pattern
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+      );
+
+      -- Analysis Tags: For categorizing and searching analyses
+      CREATE TABLE IF NOT EXISTS analysis_tags (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        analysis_id INTEGER NOT NULL,
+        tag_name TEXT NOT NULL,
+        tag_category TEXT, -- 'industry', 'problem_type', 'urgency', etc.
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (analysis_id) REFERENCES ai_analysis_results (id) ON DELETE CASCADE
+      );
+
+      -- Create indexes for optimal performance
+      CREATE INDEX IF NOT EXISTS idx_pf_sessions_user_id ON problem_framing_sessions(user_id);
+      CREATE INDEX IF NOT EXISTS idx_pf_sessions_created_at ON problem_framing_sessions(created_at);
+      
+      CREATE INDEX IF NOT EXISTS idx_uploaded_files_session_id ON uploaded_files(session_id);
+      CREATE INDEX IF NOT EXISTS idx_uploaded_files_agent_type ON uploaded_files(agent_type);
+      CREATE INDEX IF NOT EXISTS idx_uploaded_files_upload_timestamp ON uploaded_files(upload_timestamp);
+      
+      CREATE INDEX IF NOT EXISTS idx_ai_results_file_id ON ai_analysis_results(file_id);
+      CREATE INDEX IF NOT EXISTS idx_ai_results_agent_type ON ai_analysis_results(agent_type);
+      CREATE INDEX IF NOT EXISTS idx_ai_results_analysis_timestamp ON ai_analysis_results(analysis_timestamp);
+      CREATE INDEX IF NOT EXISTS idx_ai_results_model_used ON ai_analysis_results(model_used);
+      
+      CREATE INDEX IF NOT EXISTS idx_problem_patterns_user_id ON problem_patterns(user_id);
+      CREATE INDEX IF NOT EXISTS idx_problem_patterns_status ON problem_patterns(status);
+      CREATE INDEX IF NOT EXISTS idx_problem_patterns_severity ON problem_patterns(severity_level);
+      
+      CREATE INDEX IF NOT EXISTS idx_analysis_tags_analysis_id ON analysis_tags(analysis_id);
+      CREATE INDEX IF NOT EXISTS idx_analysis_tags_tag_name ON analysis_tags(tag_name);
+      CREATE INDEX IF NOT EXISTS idx_analysis_tags_category ON analysis_tags(tag_category);
+    `
   }
 ];
 
@@ -183,7 +298,69 @@ const createQueries = () => {
     createCheck: db.prepare('INSERT INTO checks (user_id, check_name, check_status, check_data) VALUES (?, ?, ?, ?) RETURNING *'),
     updateCheckStatus: db.prepare('UPDATE checks SET check_status = ?, completed_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *'),
     getChecksByUser: db.prepare('SELECT * FROM checks WHERE user_id = ? ORDER BY created_at DESC'),
-    getPendingChecks: db.prepare('SELECT * FROM checks WHERE check_status = "pending" ORDER BY created_at ASC'),
+    getPendingChecks: db.prepare("SELECT * FROM checks WHERE check_status = 'pending' ORDER BY created_at ASC"),
+
+    // Problem Framing Sessions
+    createSession: db.prepare('INSERT INTO problem_framing_sessions (user_id, session_name) VALUES (?, ?) RETURNING *'),
+    getSessionsByUser: db.prepare('SELECT * FROM problem_framing_sessions WHERE user_id = ? ORDER BY created_at DESC'),
+    getSessionById: db.prepare('SELECT * FROM problem_framing_sessions WHERE id = ?'),
+    updateSession: db.prepare('UPDATE problem_framing_sessions SET session_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *'),
+
+    // Uploaded Files
+    createUploadedFile: db.prepare(`
+      INSERT INTO uploaded_files 
+      (session_id, agent_type, original_filename, file_size, file_type, file_extension, file_path, extracted_text, text_length, metadata) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *
+    `),
+    getFilesBySession: db.prepare('SELECT * FROM uploaded_files WHERE session_id = ? ORDER BY upload_timestamp DESC'),
+    getFilesByAgent: db.prepare('SELECT * FROM uploaded_files WHERE agent_type = ? ORDER BY upload_timestamp DESC'),
+    getFileById: db.prepare('SELECT * FROM uploaded_files WHERE id = ?'),
+
+    // AI Analysis Results
+    createAnalysisResult: db.prepare(`
+      INSERT INTO ai_analysis_results 
+      (file_id, agent_type, model_used, prompt_version, raw_response, core_problem, root_causes, primary_recommendation, 
+       most_affected_segment, most_affected_stage, key_metrics_to_track, supporting_evidence, processing_time_ms, token_usage, confidence_score) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *
+    `),
+    getAnalysisByFileId: db.prepare('SELECT * FROM ai_analysis_results WHERE file_id = ?'),
+    getAnalysesByUser: db.prepare(`
+      SELECT ar.*, uf.original_filename, uf.agent_type as file_agent_type, pfs.session_name 
+      FROM ai_analysis_results ar 
+      JOIN uploaded_files uf ON ar.file_id = uf.id 
+      JOIN problem_framing_sessions pfs ON uf.session_id = pfs.id 
+      WHERE pfs.user_id = ? 
+      ORDER BY ar.analysis_timestamp DESC
+    `),
+    getAnalysesByAgent: db.prepare('SELECT * FROM ai_analysis_results WHERE agent_type = ? ORDER BY analysis_timestamp DESC'),
+    updateAnalysisRating: db.prepare('UPDATE ai_analysis_results SET user_rating = ?, user_notes = ?, reviewed_at = CURRENT_TIMESTAMP WHERE id = ?'),
+
+    // Problem Patterns
+    createProblemPattern: db.prepare(`
+      INSERT INTO problem_patterns 
+      (user_id, pattern_name, pattern_description, severity_level, status, related_analyses) 
+      VALUES (?, ?, ?, ?, ?, ?) RETURNING *
+    `),
+    getPatternsByUser: db.prepare('SELECT * FROM problem_patterns WHERE user_id = ? ORDER BY last_seen DESC'),
+    updatePatternOccurrence: db.prepare(`
+      UPDATE problem_patterns 
+      SET occurrence_count = occurrence_count + 1, last_seen = CURRENT_TIMESTAMP, related_analyses = ? 
+      WHERE id = ? RETURNING *
+    `),
+    updatePatternStatus: db.prepare('UPDATE problem_patterns SET status = ? WHERE id = ? RETURNING *'),
+
+    // Analysis Tags
+    createAnalysisTag: db.prepare('INSERT INTO analysis_tags (analysis_id, tag_name, tag_category) VALUES (?, ?, ?) RETURNING *'),
+    getTagsByAnalysis: db.prepare('SELECT * FROM analysis_tags WHERE analysis_id = ?'),
+    getAnalysesByTag: db.prepare(`
+      SELECT ar.*, uf.original_filename, pfs.session_name 
+      FROM ai_analysis_results ar 
+      JOIN uploaded_files uf ON ar.file_id = uf.id 
+      JOIN problem_framing_sessions pfs ON uf.session_id = pfs.id 
+      JOIN analysis_tags at ON ar.id = at.analysis_id 
+      WHERE at.tag_name = ? 
+      ORDER BY ar.analysis_timestamp DESC
+    `),
   };
 };
 
