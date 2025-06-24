@@ -16,7 +16,9 @@
     "jose": "^5.4.1",
     "react": "^18",
     "react-dom": "^18",
-    "react-hook-form": "^7.58.1"
+    "react-hook-form": "^7.58.1",
+    "pdf-parse": "^1.1.1",
+    "mammoth": "^1.4.30"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",

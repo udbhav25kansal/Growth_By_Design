@@ -15,12 +15,23 @@ interface ValidationResult {
   suggestion: string;
 }
 
+interface ProblemAnalysis {
+  analysis: string;
+}
+
 export default function DashboardPage() {
   const [data, setData] = useState<OnboardingData | null>(null);
   const [actionText, setActionText] = useState('');
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   const [narrative, setNarrative] = useState<string>('');
+  
+  // Problem Framing states
+  const [showProblemModal, setShowProblemModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [problemAnalysis, setProblemAnalysis] = useState<string>('');
+  const [dragActive, setDragActive] = useState(false);
 
   useEffect(() => {
     const raw = window.localStorage.getItem("onboardingData");
@@ -29,6 +40,76 @@ export default function DashboardPage() {
       setData(parsedData);
     }
   }, []);
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (file.type === 'application/pdf' || 
+          file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+          file.name.endsWith('.pdf') || 
+          file.name.endsWith('.docx')) {
+        setSelectedFile(file);
+      } else {
+        alert('Please upload a PDF or DOCX file');
+      }
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (file.type === 'application/pdf' || 
+          file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+          file.name.endsWith('.pdf') || 
+          file.name.endsWith('.docx')) {
+        setSelectedFile(file);
+      } else {
+        alert('Please upload a PDF or DOCX file');
+      }
+    }
+  };
+
+  const handleAnalyzeProblem = async () => {
+    if (!selectedFile) return;
+
+    setIsAnalyzing(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      const response = await fetch('/api/problem-frame', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const result: ProblemAnalysis = await response.json();
+        setProblemAnalysis(result.analysis);
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Error analyzing problem:', error);
+      alert('Failed to analyze the document. Please try again.');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const handleValidateAction = async () => {
     if (!actionText.trim() || !data) return;
@@ -288,9 +369,142 @@ export default function DashboardPage() {
                 )}
               </div>
             </div>
+
+            {/* Problem Framing Section */}
+            <div className="gradient-border hover-lift lg:col-span-2">
+              <div className="gradient-border-inner p-8">
+                <div className="flex items-center mb-6">
+                  <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center mr-4">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900">Problem Framing Agent</h2>
+                </div>
+                
+                <p className="text-gray-600 mb-6">
+                  Upload your CRM data (PDF or DOCX) to identify the real underlying problems affecting your startup's growth.
+                </p>
+                
+                <button
+                  onClick={() => setShowProblemModal(true)}
+                  className="w-full bg-gradient-to-r from-orange-600 to-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-orange-700 hover:to-red-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                >
+                  Analyze CRM Data
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Problem Framing Modal */}
+      {showProblemModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold text-gray-900">Upload CRM Data</h3>
+                <button
+                  onClick={() => {
+                    setShowProblemModal(false);
+                    setSelectedFile(null);
+                    setProblemAnalysis('');
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {!problemAnalysis ? (
+                <>
+                  <div
+                    className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
+                      dragActive ? 'border-orange-500 bg-orange-50' : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                    onDragEnter={handleDrag}
+                    onDragLeave={handleDrag}
+                    onDragOver={handleDrag}
+                    onDrop={handleDrop}
+                  >
+                    <input
+                      type="file"
+                      id="file-upload"
+                      className="hidden"
+                      accept=".pdf,.docx"
+                      onChange={handleFileChange}
+                    />
+                    
+                    <label htmlFor="file-upload" className="cursor-pointer">
+                      <div className="mb-4">
+                        <svg className="w-16 h-16 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                      </div>
+                      
+                      <p className="text-lg font-medium text-gray-700 mb-2">
+                        {selectedFile ? selectedFile.name : 'Drop your CRM data file here'}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        or click to browse (PDF or DOCX)
+                      </p>
+                    </label>
+                  </div>
+
+                  <div className="mt-4 text-sm text-gray-600">
+                    <p className="font-semibold mb-2">Expected file content:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Deal win/loss reports</li>
+                      <li>Reasons documented for lost sales</li>
+                      <li>Sales funnel conversion metrics</li>
+                    </ul>
+                  </div>
+
+                  {selectedFile && (
+                    <button
+                      onClick={handleAnalyzeProblem}
+                      disabled={isAnalyzing}
+                      className="w-full mt-6 bg-gradient-to-r from-orange-600 to-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-orange-700 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                    >
+                      {isAnalyzing ? (
+                        <span className="flex items-center justify-center">
+                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Analyzing CRM Data...
+                        </span>
+                      ) : 'Analyze Problem'}
+                    </button>
+                  )}
+                </>
+              ) : (
+                <div className="space-y-4">
+                  <div className="bg-gradient-to-r from-orange-50 to-red-50 p-6 rounded-xl">
+                    <h4 className="font-semibold text-gray-900 mb-3">Problem Analysis</h4>
+                    <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap">
+                      {problemAnalysis}
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={() => {
+                      setSelectedFile(null);
+                      setProblemAnalysis('');
+                    }}
+                    className="w-full bg-gray-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-700 transition-all duration-200"
+                  >
+                    Analyze Another File
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
