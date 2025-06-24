@@ -90,7 +90,7 @@ export default function DashboardPage() {
   const [isGeneratingOverall, setIsGeneratingOverall] = useState(false);
   
   // Tutorial Modal
-  const [showTutorial, setShowTutorial] = useState(true);
+  const [showTutorial, setShowTutorial] = useState(false);
   
   // Validation Agent Tooltip
   const [showValidationTooltip, setShowValidationTooltip] = useState(false);
@@ -124,6 +124,15 @@ export default function DashboardPage() {
       const parsedData = JSON.parse(raw);
       setData(parsedData);
     }
+  }, []);
+
+  // Show tutorial after a delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowTutorial(true);
+    }, 3000); // Show after 3 seconds
+
+    return () => clearTimeout(timer);
   }, []);
 
   const handleDrag = (e: React.DragEvent) => {
@@ -1549,14 +1558,20 @@ export default function DashboardPage() {
                 </div>
                 <h3 className="font-bold text-gray-900">Analysis Hub</h3>
               </div>
-              <div className="w-5 h-5 flex items-center justify-center">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              </div>
+              <button
+                onClick={() => setShowTutorial(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
+                aria-label="Close tutorial"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
 
             {/* Content */}
             <div className="space-y-4">
-              <p className="text-gray-700 text-sm font-medium">Click the green button to access:</p>
+              <p className="text-gray-700 text-sm font-medium">Start by uploading your business files to the 3 Analysis Agents below. Once you've completed your first analyses, come back here to access:</p>
               
               <div className="space-y-3">
                 {/* Overall Insights */}
@@ -1568,7 +1583,7 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <h4 className="font-semibold text-gray-800 text-sm">Overall Insights</h4>
-                    <p className="text-gray-600 text-xs">Strategic analysis across all your data</p>
+                    <p className="text-gray-600 text-xs">AI-powered strategic recommendations from all your analyses</p>
                   </div>
                 </div>
 
@@ -1581,7 +1596,7 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <h4 className="font-semibold text-gray-800 text-sm">Analysis History</h4>
-                    <p className="text-gray-600 text-xs">View all your previous analyses</p>
+                    <p className="text-gray-600 text-xs">Browse and revisit all your uploaded files and results</p>
                   </div>
                 </div>
 
@@ -1593,15 +1608,15 @@ export default function DashboardPage() {
                     </svg>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-800 text-sm">3 Analysis Agents</h4>
-                    <p className="text-gray-600 text-xs">CRM, Customer & Product data</p>
+                    <h4 className="font-semibold text-gray-800 text-sm">Advanced Tools</h4>
+                    <p className="text-gray-600 text-xs">Export reports, generate narratives, and more</p>
                   </div>
                 </div>
               </div>
 
               <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
                 <p className="text-green-700 text-xs text-center font-medium">
-                  👆 Click the green button above to get started!
+                  🚀 Ready to dive deeper? Upload your files to the Problem Framing Agents below first, then click the green button to unlock powerful insights!
                 </p>
               </div>
             </div>
