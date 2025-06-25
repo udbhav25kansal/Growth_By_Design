@@ -94,6 +94,9 @@ export default function DashboardPage() {
   
   // Validation Agent Tooltip
   const [showValidationTooltip, setShowValidationTooltip] = useState(false);
+  
+  // Narrative Agent Tooltip
+  const [showNarrativeTooltip, setShowNarrativeTooltip] = useState(false);
 
   useEffect(() => {
     // Check if user is authenticated
@@ -695,7 +698,7 @@ export default function DashboardPage() {
             </div>
 
             <div className="mt-8 text-sm text-gray-600">
-              <p className="font-semibold mb-2">What&apos;s being stored:</p>
+              <p className="font-semibold mb-2">What's being stored:</p>
               <ul className="list-disc list-inside space-y-1">
                 <li>Original uploaded files with extracted text content</li>
                 <li>Complete AI analysis responses with structured data parsing</li>
@@ -1122,8 +1125,68 @@ export default function DashboardPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                     </svg>
                   </div>
-                  <div>
-                    <h2 className="text-3xl font-bold text-gray-900 group-hover:text-gradient transition-all duration-300">Investor Narrative</h2>
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3">
+                      <h2 className="text-3xl font-bold text-gray-900 group-hover:text-gradient transition-all duration-300">Investor Narrative</h2>
+                      <div className="relative">
+                        <button
+                          onClick={() => setShowNarrativeTooltip(!showNarrativeTooltip)}
+                          className={`relative w-10 h-10 bg-gradient-to-br from-green-400 via-green-500 to-teal-600 hover:from-green-500 hover:via-green-600 hover:to-teal-700 border-2 border-white shadow-lg hover:shadow-2xl rounded-full flex items-center justify-center transition-all duration-500 transform hover:scale-125 group overflow-hidden ${!showNarrativeTooltip ? 'animate-bounce' : ''}`}
+                          title="Learn about narrative generation"
+                        >
+                          {/* Animated background glow */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-green-400 to-teal-600 rounded-full animate-pulse opacity-20"></div>
+                          
+                          {/* Shimmer effect */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+                          
+                          {/* Question mark icon with enhanced design */}
+                          <div className="relative z-10 flex items-center justify-center">
+                            <svg className="w-5 h-5 text-white drop-shadow-sm transition-all duration-300 group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
+                            </svg>
+                          </div>
+                          
+                          {/* Pulsing ring effect */}
+                          <div className="absolute inset-0 rounded-full border-2 border-green-300 animate-ping opacity-30"></div>
+                        </button>
+                        
+                        {/* Narrative Tooltip */}
+                        {showNarrativeTooltip && (
+                          <>
+                            <div 
+                              className="fixed inset-0 z-[100]" 
+                              onClick={() => setShowNarrativeTooltip(false)}
+                            />
+                            <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[110] w-96 bg-white rounded-xl shadow-2xl border border-green-200 p-5 backdrop-blur-sm max-w-[90vw]">
+                              <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white border-l border-t border-green-200 rotate-45"></div>
+                              
+                              <div className="space-y-3">
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-7 h-7 bg-gradient-to-br from-green-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg">
+                                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                    </svg>
+                                  </div>
+                                  <h4 className="font-bold text-gray-900 text-base">What This Agent Does</h4>
+                                </div>
+                                
+                                <p className="text-gray-700 text-sm leading-relaxed">
+                                  Builds your investor story from real validated wins and data points logged through your Growth by Design journey. 
+                                  Creates structured narratives showing how you identified problems, tested solutions, and measured impact with concrete results.
+                                </p>
+                                 
+                                <div className="pt-3 border-t border-green-100">
+                                  <p className="text-gray-600 text-sm">
+                                    <strong className="text-green-700">Real Data, Real Story:</strong> "In Q2, we identified unclear messaging (Insight) → tested 3 landing pages → found a message that increased conversions 250% (Validated Result) → proving our repeatable growth process."
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
                     <p className="text-gray-600 text-lg">AI-Generated Story</p>
                   </div>
                 </div>
@@ -1367,7 +1430,7 @@ export default function DashboardPage() {
                       <div>
                         <p className="text-sm font-medium text-purple-800 mb-1">🎯 Analysis Focus</p>
                         <p className="text-sm text-purple-700">
-                          This agent gathers comprehensive data from your uploaded file across critical customer interaction areas to ensure accurate problem framing and identify the real underlying issues affecting your startup&apos;s growth.
+                          This agent gathers comprehensive data from your uploaded file across critical customer interaction areas to ensure accurate problem framing and identify the real underlying issues affecting your startup's growth.
                         </p>
                       </div>
                     </div>
@@ -1492,7 +1555,7 @@ export default function DashboardPage() {
                       <div>
                         <p className="text-sm font-medium text-blue-800 mb-1">📊 Analysis Focus</p>
                         <p className="text-sm text-blue-700">
-                          This agent gathers comprehensive data from your uploaded file across critical product analytics areas to ensure accurate problem framing from product analytics data and identify the real underlying issues affecting your startup&apos;s product performance.
+                          This agent gathers comprehensive data from your uploaded file across critical product analytics areas to ensure accurate problem framing from product analytics data and identify the real underlying issues affecting your startup's product performance.
                         </p>
                       </div>
                     </div>
@@ -1571,7 +1634,7 @@ export default function DashboardPage() {
 
             {/* Content */}
             <div className="space-y-4">
-              <p className="text-gray-700 text-sm font-medium">Start by uploading your business files to the 3 Analysis Agents below. Once you&apos;ve completed your first analyses, come back here to access:</p>
+              <p className="text-gray-700 text-sm font-medium">Start by uploading your business files to the 3 Analysis Agents below. Once you've completed your first analyses, come back here to access:</p>
               
               <div className="space-y-3">
                 {/* Overall Insights */}
