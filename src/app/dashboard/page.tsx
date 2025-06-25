@@ -1430,7 +1430,7 @@ export default function DashboardPage() {
                       <div>
                         <p className="text-sm font-medium text-purple-800 mb-1">🎯 Analysis Focus</p>
                         <p className="text-sm text-purple-700">
-                          This agent gathers comprehensive data from your uploaded file across critical customer interaction areas to ensure accurate problem framing and identify the real underlying issues affecting your startup's growth.
+                          This agent gathers comprehensive data from your uploaded file across critical customer interaction areas to ensure accurate problem framing and identify the real underlying issues affecting your startup&apos;s growth.
                         </p>
                       </div>
                     </div>
@@ -1555,7 +1555,7 @@ export default function DashboardPage() {
                       <div>
                         <p className="text-sm font-medium text-blue-800 mb-1">📊 Analysis Focus</p>
                         <p className="text-sm text-blue-700">
-                          This agent gathers comprehensive data from your uploaded file across critical product analytics areas to ensure accurate problem framing from product analytics data and identify the real underlying issues affecting your startup's product performance.
+                          This agent gathers comprehensive data from your uploaded file across critical product analytics areas to ensure accurate problem framing from product analytics data and identify the real underlying issues affecting your startup&apos;s product performance.
                         </p>
                       </div>
                     </div>
