@@ -698,7 +698,7 @@ export default function DashboardPage() {
             </div>
 
             <div className="mt-8 text-sm text-gray-600">
-              <p className="font-semibold mb-2">What's being stored:</p>
+              <p className="font-semibold mb-2">What&apos;s being stored:</p>
               <ul className="list-disc list-inside space-y-1">
                 <li>Original uploaded files with extracted text content</li>
                 <li>Complete AI analysis responses with structured data parsing</li>
@@ -1067,7 +1067,7 @@ export default function DashboardPage() {
                       value={actionText}
                       onChange={(e) => setActionText(e.target.value)}
                       className="w-full h-36 px-6 py-4 border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 text-gray-900 placeholder-gray-500 transition-all duration-300 text-lg leading-relaxed glass"
-                      placeholder="Describe the action you're considering... (e.g., 'Launch a referral program to reduce customer acquisition cost and increase viral growth')"
+                      placeholder="Describe the action you&apos;re considering... (e.g., &apos;Launch a referral program to reduce customer acquisition cost and increase viral growth&apos;)"
                     />
                   </div>
                   
@@ -1177,9 +1177,9 @@ export default function DashboardPage() {
                                 </p>
                                  
                                 <div className="pt-3 border-t border-green-100">
-                                  <p className="text-gray-600 text-sm">
-                                    <strong className="text-green-700">Real Data, Real Story:</strong> "In Q2, we identified unclear messaging (Insight) → tested 3 landing pages → found a message that increased conversions 250% (Validated Result) → proving our repeatable growth process."
-                                  </p>
+                                                                  <p className="text-gray-600 text-sm">
+                                  <strong className="text-green-700">Real Data, Real Story:</strong> &quot;In Q2, we identified unclear messaging (Insight) → tested 3 landing pages → found a message that increased conversions 250% (Validated Result) → proving our repeatable growth process.&quot;
+                                </p>
                                 </div>
                               </div>
                             </div>
@@ -1634,7 +1634,7 @@ export default function DashboardPage() {
 
             {/* Content */}
             <div className="space-y-4">
-              <p className="text-gray-700 text-sm font-medium">Start by uploading your business files to the 3 Analysis Agents below. Once you've completed your first analyses, come back here to access:</p>
+              <p className="text-gray-700 text-sm font-medium">Start by uploading your business files to the 3 Analysis Agents below. Once you&apos;ve completed your first analyses, come back here to access:</p>
               
               <div className="space-y-3">
                 {/* Overall Insights */}
