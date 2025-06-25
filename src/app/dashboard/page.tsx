@@ -695,7 +695,7 @@ export default function DashboardPage() {
             </div>
 
             <div className="mt-8 text-sm text-gray-600">
-              <p className="font-semibold mb-2">What's being stored:</p>
+              <p className="font-semibold mb-2">What&apos;s being stored:</p>
               <ul className="list-disc list-inside space-y-1">
                 <li>Original uploaded files with extracted text content</li>
                 <li>Complete AI analysis responses with structured data parsing</li>
@@ -1367,7 +1367,7 @@ export default function DashboardPage() {
                       <div>
                         <p className="text-sm font-medium text-purple-800 mb-1">🎯 Analysis Focus</p>
                         <p className="text-sm text-purple-700">
-                          This agent gathers comprehensive data from your uploaded file across critical customer interaction areas to ensure accurate problem framing and identify the real underlying issues affecting your startup's growth.
+                          This agent gathers comprehensive data from your uploaded file across critical customer interaction areas to ensure accurate problem framing and identify the real underlying issues affecting your startup&apos;s growth.
                         </p>
                       </div>
                     </div>
@@ -1492,7 +1492,7 @@ export default function DashboardPage() {
                       <div>
                         <p className="text-sm font-medium text-blue-800 mb-1">📊 Analysis Focus</p>
                         <p className="text-sm text-blue-700">
-                          This agent gathers comprehensive data from your uploaded file across critical product analytics areas to ensure accurate problem framing from product analytics data and identify the real underlying issues affecting your startup's product performance.
+                          This agent gathers comprehensive data from your uploaded file across critical product analytics areas to ensure accurate problem framing from product analytics data and identify the real underlying issues affecting your startup&apos;s product performance.
                         </p>
                       </div>
                     </div>
@@ -1571,7 +1571,7 @@ export default function DashboardPage() {
 
             {/* Content */}
             <div className="space-y-4">
-              <p className="text-gray-700 text-sm font-medium">Start by uploading your business files to the 3 Analysis Agents below. Once you've completed your first analyses, come back here to access:</p>
+              <p className="text-gray-700 text-sm font-medium">Start by uploading your business files to the 3 Analysis Agents below. Once you&apos;ve completed your first analyses, come back here to access:</p>
               
               <div className="space-y-3">
                 {/* Overall Insights */}
