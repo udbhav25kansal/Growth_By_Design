@@ -5,6 +5,45 @@ import '../../../backend/database/init' // Ensure database is initialized
 // Ensure this route runs on the Node.js runtime so we can use full Node APIs
 export const runtime = 'nodejs'
 
+// Handle CORS preflight requests
+export async function OPTIONS(req: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  })
+}
+
+// Explicitly handle GET requests with proper error
+export async function GET(req: NextRequest) {
+  console.log('GET request received on /api/problem-frame - this method is not allowed')
+  return NextResponse.json(
+    { error: 'Method GET not allowed. This endpoint only accepts POST requests with file uploads.' },
+    { status: 405, headers: { 'Allow': 'POST' } }
+  )
+}
+
+// Explicitly handle PUT requests with proper error
+export async function PUT(req: NextRequest) {
+  console.log('PUT request received on /api/problem-frame - this method is not allowed')
+  return NextResponse.json(
+    { error: 'Method PUT not allowed. This endpoint only accepts POST requests with file uploads.' },
+    { status: 405, headers: { 'Allow': 'POST' } }
+  )
+}
+
+// Explicitly handle DELETE requests with proper error
+export async function DELETE(req: NextRequest) {
+  console.log('DELETE request received on /api/problem-frame - this method is not allowed')
+  return NextResponse.json(
+    { error: 'Method DELETE not allowed. This endpoint only accepts POST requests with file uploads.' },
+    { status: 405, headers: { 'Allow': 'POST' } }
+  )
+}
+
 // Dynamically import heavy parsing libraries only when needed to keep cold starts fast
 async function extractTextFromFile(filename: string, buffer: Buffer, mimeType: string): Promise<string> {
   if (mimeType === 'application/pdf' || filename.endsWith('.pdf')) {
@@ -30,10 +69,19 @@ export async function POST(req: NextRequest) {
   const startTime = Date.now()
   
   try {
+    console.log('POST request received on /api/problem-frame')
     const formData = await req.formData()
     const file = formData.get('file') as File | null
     const userId = formData.get('userId') as string | null
     const sessionId = formData.get('sessionId') as string | null
+
+    console.log('Form data received:', { 
+      hasFile: !!file, 
+      userId, 
+      sessionId,
+      fileType: file?.type,
+      fileName: file?.name 
+    })
 
     if (!file) {
       return NextResponse.json({ error: 'No file uploaded (expected field "file")' }, { status: 400 })
@@ -75,6 +123,7 @@ export async function POST(req: NextRequest) {
 
     // If no OpenAI key, return the raw extracted text so frontend can still show something useful
     if (!process.env.OPENAI_API_KEY) {
+      console.log('OPENAI_API_KEY not configured, returning extracted text only')
       return NextResponse.json({
         analysis: 'OPENAI_API_KEY not configured – returning extracted text only',
         extractedText
@@ -94,6 +143,7 @@ CRM DATA BEGIN
 ${extractedText}
 CRM DATA END`
 
+    console.log('Calling OpenAI API...')
     const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -112,12 +162,15 @@ CRM DATA END`
     })
 
     if (!openaiRes.ok) {
+      console.error('OpenAI API error:', openaiRes.status, await openaiRes.text())
       throw new Error(`OpenAI API error: ${openaiRes.status}`)
     }
 
     const openaiJson = await openaiRes.json()
     const rawResponse: string = openaiJson.choices?.[0]?.message?.content?.trim() || ''
     const processingTime = Date.now() - startTime
+
+    console.log('OpenAI response received, saving to database...')
 
     // Save AI analysis to database
     const analysisResult = await ProblemFramingService.saveAnalysisResult(
@@ -142,6 +195,7 @@ CRM DATA END`
       }
     )
 
+    console.log('Analysis completed successfully')
     return NextResponse.json({ 
       analysis: rawResponse,
       sessionId: currentSessionId,
