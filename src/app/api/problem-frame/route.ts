@@ -152,11 +152,4 @@ CRM DATA END`
     console.error('Problem Frame Agent error:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
-}
-
-export async function GET(req: NextRequest) {
-  return NextResponse.json(
-    { error: 'GET method not allowed for this endpoint. Please use POST.' },
-    { status: 405, headers: { 'Allow': 'POST' } }
-  );
 } 
