@@ -73,13 +73,7 @@ export async function POST(req: NextRequest) {
       }
     )
 
-    // If no OpenAI key, return the raw extracted text so frontend can still show something useful
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json({
-        analysis: 'OPENAI_API_KEY not configured – returning extracted text only',
-        extractedText
-      })
-    }
+
 
     // Build the prompt for OpenAI to frame the real problem
     const prompt = `You are a senior SaaS growth consultant. Your task is to identify the REAL underlying problems revealed in the startup's CRM data.
@@ -97,7 +91,7 @@ CRM DATA END`
     const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Authorization': `Bearer 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`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
