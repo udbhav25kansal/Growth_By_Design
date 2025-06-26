@@ -9,12 +9,14 @@ interface ValidationRequest {
   };
   goal?: string;
   stage?: string;
+  overallAnalysis?: string;
+  analyses?: any[];
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body: ValidationRequest = await request.json();
-    const { actionText, metrics, goal, stage } = body;
+    const { actionText, metrics, goal, stage, overallAnalysis, analyses } = body;
 
     if (!actionText || !metrics) {
       return NextResponse.json(
@@ -41,25 +43,37 @@ export async function POST(request: NextRequest) {
     const goalContext = goal ? ` Their primary business goal is: "${goal}".` : '';
     const stageContext = stage ? ` They are a ${stage}-stage startup.` : '';
     
+    // Build analysis context
+    let analysisContext = '';
+    if (overallAnalysis) {
+      analysisContext = `\n\nDEEP ANALYSIS INSIGHTS:\n${overallAnalysis}`;
+    } else if (analyses && analyses.length > 0) {
+      const recentAnalyses = analyses.slice(0, 3).map((analysis, index) => 
+        `${index + 1}. ${analysis.agent_type}: ${analysis.analysis?.substring(0, 300)}...`
+      ).join('\n');
+      analysisContext = `\n\nRECENT ANALYSIS INSIGHTS:\n${recentAnalyses}`;
+    }
+    
     const prompt = `You are a senior startup coach and Go-To-Market engineer with 15+ years of experience scaling SaaS companies from seed to IPO.${stageContext}${goalContext}
 
 CURRENT METRICS ANALYSIS:
 - Monthly Recurring Revenue: $${metrics.mrr}
 - Churn Rate: ${metrics.churn}%
-- Conversion Rate: ${metrics.conversion}%
+- Conversion Rate: ${metrics.conversion}%${analysisContext}
 
 PROPOSED ACTION TO EVALUATE:
 "${actionText}"
 
 EXPERT VALIDATION FRAMEWORK:
-Analyze this action through multiple strategic lenses:
+Analyze this action through multiple strategic lenses, leveraging the deep analysis insights provided:
 
 1. GOAL ALIGNMENT: How well does this action directly support their stated business objective?
 2. STAGE APPROPRIATENESS: Is this the right move for their current funding/growth stage?
 3. METRIC IMPACT: Will this action positively influence their key metrics (MRR growth, churn reduction, conversion improvement)?
-4. RESOURCE EFFICIENCY: Does this action provide the highest ROI given their likely resource constraints?
-5. EXECUTION COMPLEXITY: Can they realistically execute this well with their current capabilities?
-6. MARKET TIMING: Is this action well-timed for their market position and competitive landscape?
+4. ANALYSIS ALIGNMENT: How well does this action address the specific problems and opportunities identified in their analysis data?
+5. RESOURCE EFFICIENCY: Does this action provide the highest ROI given their likely resource constraints?
+6. EXECUTION COMPLEXITY: Can they realistically execute this well with their current capabilities?
+7. STRATEGIC PRIORITY: Based on the analysis insights, is this the most important action they should take right now?
 
 RESPONSE FORMAT:
 1) ALIGNMENT VERDICT: [High/Medium/Low] - One sentence explaining the strategic alignment score

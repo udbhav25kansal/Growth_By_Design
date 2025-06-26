@@ -10,6 +10,32 @@ interface OnboardingData {
   conversion: string;
 }
 
+interface TooltipProps {
+  show: boolean;
+  onClose: () => void;
+  borderColor: string;
+  children: React.ReactNode;
+}
+
+const Tooltip: React.FC<TooltipProps> = ({ show, onClose, borderColor, children }) => {
+  if (!show) return null;
+
+  return (
+    <>
+      <div 
+        className="fixed inset-0 z-[9998]" 
+        onClick={onClose}
+      />
+      <div className={`fixed top-20 left-1/2 transform -translate-x-1/2 z-[9999] w-[500px] bg-white rounded-xl shadow-2xl border ${borderColor} p-6 backdrop-blur-sm max-w-[95vw] max-h-[85vh] overflow-y-auto`}>
+        <div className={`absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white border-l border-t ${borderColor} rotate-45`}></div>
+        <div className="space-y-3">
+          {children}
+        </div>
+      </div>
+    </>
+  );
+};
+
 interface ValidationResult {
   alignment: string;
   suggestion: string;
@@ -99,28 +125,6 @@ export default function DashboardPage() {
   const [showNarrativeTooltip, setShowNarrativeTooltip] = useState(false);
 
   useEffect(() => {
-    // Check if user is authenticated
-    const checkAuth = async () => {
-      try {
-        const response = await fetch('/api/auth/me');
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-          console.log('User authenticated:', userData);
-        } else {
-          console.error('Authentication failed, redirecting to login');
-          window.location.href = '/login';
-          return;
-        }
-      } catch (error) {
-        console.error('Error checking authentication:', error);
-        window.location.href = '/login';
-        return;
-      }
-    };
-
-    checkAuth();
-
     // Load onboarding data
     const raw = window.localStorage.getItem("onboardingData");
     if (raw) {
@@ -183,10 +187,9 @@ export default function DashboardPage() {
   const handleAnalyzeProblem = async () => {
     console.log('handleAnalyzeProblem called');
     console.log('selectedFile:', selectedFile);
-    console.log('user:', user);
     
-    if (!selectedFile || !user) {
-      console.log('Missing selectedFile or user, returning early');
+    if (!selectedFile) {
+      console.log('Missing selectedFile, returning early');
       return;
     }
 
@@ -194,7 +197,7 @@ export default function DashboardPage() {
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
-      formData.append('userId', user.id.toString());
+      formData.append('userId', '1'); // Use default user ID since no auth
 
       console.log('Sending request to /api/problem-frame');
       const response = await fetch('/api/problem-frame', {
@@ -207,7 +210,16 @@ export default function DashboardPage() {
       if (response.ok) {
         const result: ProblemAnalysis = await response.json();
         setProblemAnalysis(result.analysis);
-        console.log('Analysis saved with ID:', result.analysisId, 'Session:', result.sessionId);
+        
+        // Save to localStorage
+        saveAnalysisToLocalStorage({
+          agent_type: 'crm_data',
+          original_filename: selectedFile.name,
+          analysis: result.analysis,
+          model_used: 'gpt-4o',
+        });
+        
+        console.log('Analysis completed and saved to localStorage');
         // Refresh analysis history if sidebar is open
         if (isSidebarOpen) {
           fetchAnalysisHistory();
@@ -269,13 +281,13 @@ export default function DashboardPage() {
   };
 
   const handleAnalyzeInteraction = async () => {
-    if (!selectedInteractionFile || !user) return;
+    if (!selectedInteractionFile) return;
 
     setIsAnalyzingInteraction(true);
     try {
       const formData = new FormData();
       formData.append('file', selectedInteractionFile);
-      formData.append('userId', user.id.toString());
+      formData.append('userId', '1'); // Use default user ID since no auth
 
       const response = await fetch('/api/customer-interaction', {
         method: 'POST',
@@ -285,7 +297,16 @@ export default function DashboardPage() {
       if (response.ok) {
         const result: CustomerInteractionAnalysis = await response.json();
         setInteractionAnalysis(result.analysis);
-        console.log('Customer interaction analysis saved with ID:', result.analysisId, 'Session:', result.sessionId);
+        
+        // Save to localStorage
+        saveAnalysisToLocalStorage({
+          agent_type: 'customer_interaction',
+          original_filename: selectedInteractionFile.name,
+          analysis: result.analysis,
+          model_used: 'gpt-4o',
+        });
+        
+        console.log('Customer interaction analysis completed and saved to localStorage');
         // Refresh analysis history if sidebar is open
         if (isSidebarOpen) {
           fetchAnalysisHistory();
@@ -346,13 +367,13 @@ export default function DashboardPage() {
   };
 
   const handleAnalyzeAnalytics = async () => {
-    if (!selectedAnalyticsFile || !user) return;
+    if (!selectedAnalyticsFile) return;
 
     setIsAnalyzingAnalytics(true);
     try {
       const formData = new FormData();
       formData.append('file', selectedAnalyticsFile);
-      formData.append('userId', user.id.toString());
+      formData.append('userId', '1'); // Use default user ID since no auth
 
       const response = await fetch('/api/product-analytics', {
         method: 'POST',
@@ -362,7 +383,16 @@ export default function DashboardPage() {
       if (response.ok) {
         const result: ProductAnalyticsAnalysis = await response.json();
         setAnalyticsAnalysis(result.analysis);
-        console.log('Product analytics analysis saved with ID:', result.analysisId, 'Session:', result.sessionId);
+        
+        // Save to localStorage
+        saveAnalysisToLocalStorage({
+          agent_type: 'product_analytics',
+          original_filename: selectedAnalyticsFile.name,
+          analysis: result.analysis,
+          model_used: 'gpt-4o',
+        });
+        
+        console.log('Product analytics analysis completed and saved to localStorage');
         // Refresh analysis history if sidebar is open
         if (isSidebarOpen) {
           fetchAnalysisHistory();
@@ -384,6 +414,10 @@ export default function DashboardPage() {
 
     setIsValidating(true);
     try {
+      // Get analyses from localStorage to include in validation
+      const savedAnalyses = localStorage.getItem('analysisHistory');
+      const analyses = savedAnalyses ? JSON.parse(savedAnalyses) : [];
+      
       const response = await fetch('/api/validate', {
         method: 'POST',
         headers: {
@@ -397,7 +431,9 @@ export default function DashboardPage() {
             conversion: data.conversion
           },
           goal: data.goal,
-          stage: data.stage
+          stage: data.stage,
+          overallAnalysis: overallAnalysis, // Include overall analysis if available
+          analyses: analyses // Include all analyses for context
         }),
       });
 
@@ -439,43 +475,85 @@ export default function DashboardPage() {
     }
   };
 
-  const fetchAnalysisHistory = async () => {
-    if (!user) return;
+  // Helper function to save analysis to localStorage
+  const saveAnalysisToLocalStorage = (analysis: any) => {
+    try {
+      const savedAnalyses = localStorage.getItem('analysisHistory');
+      const analyses = savedAnalyses ? JSON.parse(savedAnalyses) : [];
+      
+      // Add new analysis to the beginning of the array
+      const newAnalysis = {
+        id: Date.now(), // Use timestamp as ID
+        ...analysis,
+        created_at: new Date().toISOString(),
+      };
+      
+      analyses.unshift(newAnalysis);
+      
+      // Keep only the last 50 analyses to avoid localStorage bloat
+      if (analyses.length > 50) {
+        analyses.splice(50);
+      }
+      
+      localStorage.setItem('analysisHistory', JSON.stringify(analyses));
+      console.log('Saved analysis to localStorage:', newAnalysis);
+    } catch (error) {
+      console.error('Error saving analysis to localStorage:', error);
+    }
+  };
 
+  const fetchAnalysisHistory = async () => {
     setIsLoadingHistory(true);
     try {
-      const response = await fetch(`/api/analyses?userId=${user.id}`);
-      if (response.ok) {
-        const result = await response.json();
-        setAnalysisHistory(result.analyses || []);
-        console.log('Loaded analysis history:', result.analyses?.length || 0, 'analyses');
-      } else {
-        console.error('Failed to fetch analysis history');
-      }
+      // Get analyses from localStorage instead of API
+      const savedAnalyses = localStorage.getItem('analysisHistory');
+      const analyses = savedAnalyses ? JSON.parse(savedAnalyses) : [];
+      setAnalysisHistory(analyses);
+      console.log('Loaded analysis history from localStorage:', analyses.length, 'analyses');
     } catch (error) {
-      console.error('Error fetching analysis history:', error);
+      console.error('Error loading analysis history from localStorage:', error);
+      setAnalysisHistory([]);
     } finally {
       setIsLoadingHistory(false);
     }
   };
 
   const generateOverallAnalysis = async () => {
-    if (!user) return;
-
     setIsGeneratingOverall(true);
     try {
+      // Get analyses from localStorage
+      const savedAnalyses = localStorage.getItem('analysisHistory');
+      const analyses = savedAnalyses ? JSON.parse(savedAnalyses) : [];
+      
+      if (analyses.length === 0) {
+        alert('No analyses found. Please complete some analyses first.');
+        return;
+      }
+
       const response = await fetch('/api/overall-analysis', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId: user.id }),
+        body: JSON.stringify({ 
+          userId: 1,
+          analyses: analyses // Send the localStorage analyses
+        }),
       });
 
       if (response.ok) {
         const result = await response.json();
         setOverallAnalysis(result.analysis);
-        console.log('Generated overall analysis with ID:', result.analysisId, 'covering', result.analysisCount, 'analyses');
+        
+        // Save overall analysis to localStorage
+        saveAnalysisToLocalStorage({
+          agent_type: 'overall_analysis',
+          original_filename: 'Overall Analysis',
+          analysis: result.analysis,
+          model_used: 'gpt-4o',
+        });
+        
+        console.log('Generated overall analysis covering', analyses.length, 'analyses');
         // Refresh analysis history to include the new overall analysis
         fetchAnalysisHistory();
       } else {
@@ -642,6 +720,8 @@ export default function DashboardPage() {
                           return { color: 'bg-purple-500', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' };
                         case 'product_analytics':
                           return { color: 'bg-blue-500', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' };
+                        case 'overall_analysis':
+                          return { color: 'bg-green-500', icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' };
                         default:
                           return { color: 'bg-gray-500', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' };
                       }
@@ -652,13 +732,14 @@ export default function DashboardPage() {
                         case 'crm_data': return 'CRM Data Analysis';
                         case 'customer_interaction': return 'Customer Interaction';
                         case 'product_analytics': return 'Product Analytics';
+                        case 'overall_analysis': return 'Overall Analysis';
                         default: return 'Analysis';
                       }
                     };
 
                     const agentConfig = getAgentIcon(analysis.file_agent_type || analysis.agent_type);
-                    const analysisDate = new Date(analysis.analysis_timestamp).toLocaleDateString();
-                    const analysisTime = new Date(analysis.analysis_timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const analysisDate = new Date(analysis.created_at || analysis.analysis_timestamp).toLocaleDateString();
+                    const analysisTime = new Date(analysis.created_at || analysis.analysis_timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
                     return (
                       <div key={analysis.id} className="bg-white p-4 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors cursor-pointer">
@@ -1017,40 +1098,6 @@ export default function DashboardPage() {
                           <div className="absolute inset-0 rounded-full border-2 border-purple-300 animate-ping opacity-30"></div>
                         </button>
                         
-                                                {/* Validation Tooltip */}
-                        {showValidationTooltip && (
-                          <>
-                            <div 
-                              className="fixed inset-0 z-[100]" 
-                              onClick={() => setShowValidationTooltip(false)}
-                            />
-                            <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[110] w-96 bg-white rounded-xl shadow-2xl border border-purple-200 p-5 backdrop-blur-sm max-w-[90vw]">
-                              <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white border-l border-t border-purple-200 rotate-45"></div>
-                              
-                              <div className="space-y-3">
-                                                                 <div className="flex items-center space-x-3">
-                                   <div className="w-7 h-7 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
-                                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                     </svg>
-                                   </div>
-                                   <h4 className="font-bold text-gray-900 text-base">What This Agent Does</h4>
-                                 </div>
-                                
-                                                                 <p className="text-gray-700 text-sm leading-relaxed">
-                                   Validates your proposed business actions against your stated business goal, current stage, metrics, and Cross-Agent Analysis insights using GPT-4o. 
-                                   Provides alignment scores (High/Medium/Low) and goal-specific improvement recommendations to ensure your decisions are data-driven.
-                                 </p>
-                                 
-                                 <div className="pt-3 border-t border-purple-100">
-                                   <p className="text-gray-600 text-sm">
-                                     <strong className="text-purple-700">Goal-Aware Validation:</strong> Takes your primary business objective and startup stage into account for contextual recommendations.
-                                   </p>
-                                 </div>
-                              </div>
-                            </div>
-                          </>
-                        )}
                       </div>
                     </div>
                     <p className="text-gray-600 text-lg">AI-Powered Action Validation</p>
@@ -1150,41 +1197,6 @@ export default function DashboardPage() {
                           {/* Pulsing ring effect */}
                           <div className="absolute inset-0 rounded-full border-2 border-green-300 animate-ping opacity-30"></div>
                         </button>
-                        
-                        {/* Narrative Tooltip */}
-                        {showNarrativeTooltip && (
-                          <>
-                            <div 
-                              className="fixed inset-0 z-[100]" 
-                              onClick={() => setShowNarrativeTooltip(false)}
-                            />
-                            <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[110] w-96 bg-white rounded-xl shadow-2xl border border-green-200 p-5 backdrop-blur-sm max-w-[90vw]">
-                              <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white border-l border-t border-green-200 rotate-45"></div>
-                              
-                              <div className="space-y-3">
-                                <div className="flex items-center space-x-3">
-                                  <div className="w-7 h-7 bg-gradient-to-br from-green-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg">
-                                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                                    </svg>
-                                  </div>
-                                  <h4 className="font-bold text-gray-900 text-base">What This Agent Does</h4>
-                                </div>
-                                
-                                <p className="text-gray-700 text-sm leading-relaxed">
-                                  Builds your investor story from real validated wins and data points logged through your Growth by Design journey. 
-                                  Creates structured narratives showing how you identified problems, tested solutions, and measured impact with concrete results.
-                                </p>
-                                 
-                                <div className="pt-3 border-t border-green-100">
-                                                                  <p className="text-gray-600 text-sm">
-                                  <strong className="text-green-700">Real Data, Real Story:</strong> &quot;In Q2, we identified unclear messaging (Insight) → tested 3 landing pages → found a message that increased conversions 250% (Validated Result) → proving our repeatable growth process.&quot;
-                                </p>
-                                </div>
-                              </div>
-                            </div>
-                          </>
-                        )}
                       </div>
                     </div>
                     <p className="text-gray-600 text-lg">AI-Generated Story</p>
@@ -1685,6 +1697,82 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Tooltips moved to the root to avoid clipping issues */}
+      {showValidationTooltip && (
+        <Tooltip
+          show={showValidationTooltip}
+          onClose={() => setShowValidationTooltip(false)}
+          borderColor="border-purple-200"
+        >
+          <div className="space-y-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-7 h-7 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h4 className="font-bold text-gray-900 text-base">What This Agent Does</h4>
+            </div>
+            
+            <p className="text-gray-700 text-sm leading-relaxed">
+              Validates your proposed business actions against your stated business goal, current stage, metrics, and your completed analysis insights using GPT-4o. 
+              Leverages your CRM, Customer Interaction, and Product Analytics data to provide alignment scores (High/Medium/Low) and data-driven improvement recommendations.
+            </p>
+            
+            <div className="pt-3 border-t border-purple-100">
+              <p className="text-gray-600 text-sm">
+                <strong className="text-purple-700">Analysis-Powered Validation:</strong> Uses your uploaded analysis results to ensure proposed actions address the specific problems and opportunities identified in your data.
+              </p>
+            </div>
+            
+            <div className="pt-3 border-t border-purple-100">
+              <p className="text-gray-600 text-xs font-semibold mb-2">Example AI Responses:</p>
+              <div className="space-y-2 text-xs text-gray-600">
+                <p className="bg-purple-50 p-2 rounded italic">
+                  &quot;Based on your CRM analysis showing 40% churn due to poor onboarding, this action directly addresses your biggest retention issue&quot;
+                </p>
+                <p className="bg-purple-50 p-2 rounded italic">
+                  &quot;Your product analytics show users dropping off at feature X, but this action focuses on acquisition instead of fixing the core retention problem&quot;
+                </p>
+                <p className="bg-purple-50 p-2 rounded italic">
+                  &quot;The customer interaction analysis reveals pricing concerns, so this pricing strategy action is well-aligned with your data&quot;
+                </p>
+              </div>
+            </div>
+          </div>
+        </Tooltip>
+      )}
+
+      {showNarrativeTooltip && (
+        <Tooltip
+          show={showNarrativeTooltip}
+          onClose={() => setShowNarrativeTooltip(false)}
+          borderColor="border-green-200"
+        >
+          <div className="space-y-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-7 h-7 bg-gradient-to-br from-green-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <h4 className="font-bold text-gray-900 text-base">What This Agent Does</h4>
+            </div>
+            
+            <p className="text-gray-700 text-sm leading-relaxed">
+              Builds your investor story from real validated wins and data points logged through your Growth by Design journey. 
+              Creates structured narratives showing how you identified problems, tested solutions, and measured impact with concrete results.
+            </p>
+            
+            <div className="pt-3 border-t border-green-100">
+              <p className="text-gray-600 text-sm">
+                <strong className="text-green-700">Real Data, Real Story:</strong> &quot;In Q2, we identified unclear messaging (Insight) → tested 3 landing pages → found a message that increased conversions 250% (Validated Result) → proving our repeatable growth process.&quot;
+              </p>
+            </div>
+          </div>
+        </Tooltip>
       )}
 
     </div>

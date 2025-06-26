@@ -4,15 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 
-interface User {
-  id: number;
-  email: string;
-  name: string;
-}
-
 export default function AppHeader() {
   const pathname = usePathname();
-  const [user, setUser] = useState<User | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -25,34 +18,9 @@ export default function AppHeader() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Check authentication status
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await fetch('/api/auth/me');
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-        }
-      } catch (error) {
-        // User not authenticated
-      }
-    };
-    checkAuth();
-  }, []);
-
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      setUser(null);
-      window.location.href = '/';
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  };
-
   const navLinks = [
-    { href: "/dashboard", label: "Dashboard", icon: "📊", protected: true },
+    { href: "/dashboard", label: "Dashboard", icon: "📊" },
+    { href: "/get-started", label: "Get Started", icon: "🚀" },
   ];
 
   return (
@@ -84,8 +52,6 @@ export default function AppHeader() {
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-1" role="navigation" aria-label="Main navigation">
             {navLinks.map((link) => {
-              if (link.protected && !user) return null;
-              
               const isActive = pathname === link.href;
               return (
                 <Link
@@ -108,46 +74,6 @@ export default function AppHeader() {
               );
             })}
           </nav>
-
-          {/* User Menu / Auth Buttons */}
-          <div className="hidden lg:flex items-center space-x-4">
-            {user ? (
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-3 px-4 py-2 bg-gray-50 rounded-lg">
-                  <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-medium text-sm">
-                      {user.name?.charAt(0).toUpperCase() || user.email.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="text-sm">
-                    <div className="font-medium text-gray-900">{user.name || 'User'}</div>
-                    <div className="text-gray-500 text-xs">{user.email}</div>
-                  </div>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
-                >
-                  Sign Out
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-3">
-                <Link
-                  href="/login"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-all duration-200"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/signup"
-                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-                >
-                  Get Started
-                </Link>
-              </div>
-            )}
-          </div>
 
           {/* Mobile menu button */}
           <button 
@@ -178,8 +104,6 @@ export default function AppHeader() {
         }`}>
           <div className="pt-4 space-y-2">
             {navLinks.map((link) => {
-              if (link.protected && !user) return null;
-              
               const isActive = pathname === link.href;
               return (
                 <Link
@@ -197,54 +121,6 @@ export default function AppHeader() {
                 </Link>
               );
             })}
-            
-            {!user && (
-              <div className="pt-4 border-t border-gray-200 mt-4">
-                <div className="space-y-3">
-                  <div className="text-center py-2">
-                    <p className="text-sm text-gray-600 mb-3">Ready to get started?</p>
-                  </div>
-                  <Link
-                    href="/get-started"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-base font-bold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 text-center shadow-lg"
-                  >
-                    🚀 Get Started
-                  </Link>
-                  <Link
-                    href="/login"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-4 py-3 text-base font-medium text-center text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-all duration-200 border border-gray-200"
-                  >
-                    Sign In
-                  </Link>
-                </div>
-              </div>
-            )}
-            
-            {user && (
-              <div className="pt-4 border-t border-gray-200 mt-4">
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3 px-4 py-3 bg-gray-50 rounded-lg">
-                    <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center">
-                      <span className="text-white font-medium">
-                        {user.name?.charAt(0).toUpperCase() || user.email.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-900">{user.name || 'User'}</div>
-                      <div className="text-gray-500 text-sm">{user.email}</div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left px-4 py-3 text-base font-medium text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
