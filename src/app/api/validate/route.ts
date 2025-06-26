@@ -25,7 +25,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if OpenAI API key is available
+    if (!process.env.OPENAI_API_KEY) {
+      // Fallback to mock response if no API key
+      const mockAlignment = parseFloat(metrics.churn) > 30 ? 'Low' : 
+                           parseFloat(metrics.conversion) > 15 ? 'High' : 'Medium';
+      
+      const mockSuggestion = `Based on your ${metrics.churn}% churn rate and ${metrics.conversion}% conversion, consider focusing on customer retention strategies.`;
 
+      return NextResponse.json({
+        alignment: mockAlignment,
+        suggestion: mockSuggestion
+      });
+    }
 
     // Build the expert-level prompt for OpenAI with comprehensive context
     const goalContext = goal ? ` Their primary business goal is: "${goal}".` : '';
@@ -71,7 +83,7 @@ RESPONSE FORMAT:
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer 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`,
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

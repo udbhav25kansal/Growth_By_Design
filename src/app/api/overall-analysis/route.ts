@@ -24,7 +24,11 @@ export async function POST(req: NextRequest) {
     }
 
     // If no OpenAI key, return error
-    
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json({
+        error: 'OPENAI_API_KEY not configured'
+      }, { status: 500 })
+    }
 
     // Group analyses by agent type for better organization
     const crmAnalyses = analyses.filter(a => (a.file_agent_type || a.agent_type) === 'crm_data')
@@ -82,7 +86,7 @@ Please provide your analysis in this exact format:
     const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer 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`,
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

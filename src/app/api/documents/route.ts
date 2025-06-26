@@ -18,7 +18,7 @@ const getUserIdFromRequest = async (req: Request): Promise<number | null> => {
   if (!match) return null;
   try {
     const token = decodeURIComponent(match[1]);
-    const secret = '175048dce9f84f52ab649ef2a125ed3b8eeaac2140f647e10d49f469bcba8ee6';
+    const secret = process.env.JWT_SECRET ?? 'dev_secret_key';
     const secretKey = new TextEncoder().encode(secret);
     const { payload } = await jose.jwtVerify(token, secretKey) as { payload: { id: number } };
     return payload.id;
