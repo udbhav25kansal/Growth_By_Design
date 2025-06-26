@@ -5,6 +5,45 @@ import '../../../backend/database/init' // Ensure database is initialized
 // Ensure this route runs on the Node.js runtime so we can use full Node APIs
 export const runtime = 'nodejs'
 
+// Handle CORS preflight requests
+export async function OPTIONS(req: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  })
+}
+
+// Explicitly handle GET requests with proper error
+export async function GET(req: NextRequest) {
+  console.log('GET request received on /api/product-analytics - this method is not allowed')
+  return NextResponse.json(
+    { error: 'Method GET not allowed. This endpoint only accepts POST requests with file uploads.' },
+    { status: 405, headers: { 'Allow': 'POST' } }
+  )
+}
+
+// Explicitly handle PUT requests with proper error
+export async function PUT(req: NextRequest) {
+  console.log('PUT request received on /api/product-analytics - this method is not allowed')
+  return NextResponse.json(
+    { error: 'Method PUT not allowed. This endpoint only accepts POST requests with file uploads.' },
+    { status: 405, headers: { 'Allow': 'POST' } }
+  )
+}
+
+// Explicitly handle DELETE requests with proper error
+export async function DELETE(req: NextRequest) {
+  console.log('DELETE request received on /api/product-analytics - this method is not allowed')
+  return NextResponse.json(
+    { error: 'Method DELETE not allowed. This endpoint only accepts POST requests with file uploads.' },
+    { status: 405, headers: { 'Allow': 'POST' } }
+  )
+}
+
 // Dynamically import heavy parsing libraries only when needed to keep cold starts fast
 async function extractTextFromFile(filename: string, buffer: Buffer, mimeType: string): Promise<string> {
   if (mimeType === 'application/pdf' || filename.endsWith('.pdf')) {

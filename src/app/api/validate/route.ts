@@ -13,6 +13,47 @@ interface ValidationRequest {
   analyses?: any[];
 }
 
+export const runtime = 'nodejs';
+
+// Handle CORS preflight requests
+export async function OPTIONS(req: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
+}
+
+// Explicitly handle GET requests with proper error
+export async function GET(req: NextRequest) {
+  console.log('GET request received on /api/validate - this method is not allowed');
+  return NextResponse.json(
+    { error: 'Method GET not allowed. This endpoint only accepts POST requests with JSON data.' },
+    { status: 405, headers: { 'Allow': 'POST' } }
+  );
+}
+
+// Explicitly handle PUT requests with proper error
+export async function PUT(req: NextRequest) {
+  console.log('PUT request received on /api/validate - this method is not allowed');
+  return NextResponse.json(
+    { error: 'Method PUT not allowed. This endpoint only accepts POST requests with JSON data.' },
+    { status: 405, headers: { 'Allow': 'POST' } }
+  );
+}
+
+// Explicitly handle DELETE requests with proper error
+export async function DELETE(req: NextRequest) {
+  console.log('DELETE request received on /api/validate - this method is not allowed');
+  return NextResponse.json(
+    { error: 'Method DELETE not allowed. This endpoint only accepts POST requests with JSON data.' },
+    { status: 405, headers: { 'Allow': 'POST' } }
+  );
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body: ValidationRequest = await request.json();
