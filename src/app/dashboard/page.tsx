@@ -225,9 +225,24 @@ export default function DashboardPage() {
           fetchAnalysisHistory();
         }
       } else {
-        const error = await response.json();
-        console.error('API Error:', error);
-        alert(`Error: ${error.error}`);
+        console.error(`API request failed with status ${response.status}`);
+        let errorMessage = `An unexpected error occurred (status: ${response.status}).`;
+        try {
+          // Try to parse the error response as JSON
+          const errorResponse = await response.json();
+          if (errorResponse.error) {
+            errorMessage = errorResponse.error;
+          }
+        } catch (jsonError) {
+          console.error("Failed to parse error response as JSON:", jsonError);
+          // If JSON parsing fails, try to get the response as text for more context
+          const textResponse = await response.text();
+          if (textResponse) {
+            errorMessage = `Server response: ${textResponse}`;
+          }
+        }
+        console.error('Final Error Message:', errorMessage);
+        alert(`Error: ${errorMessage}`);
       }
     } catch (error) {
       console.error('Error analyzing problem:', error);
