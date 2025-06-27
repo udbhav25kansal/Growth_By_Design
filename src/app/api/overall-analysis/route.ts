@@ -8,14 +8,11 @@ export async function POST(req: NextRequest) {
   const startTime = Date.now()
   
   try {
-    const { userId } = await req.json()
+    // Use a default user ID since we removed authentication
+    const defaultUserId = 1;
 
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
-    }
-
-    // Get all user's analyses from the database
-    const analyses = await ProblemFramingService.getAnalysesByUser(parseInt(userId))
+    // Get all analyses for this user
+    const analyses = await ProblemFramingService.getAnalysesByUser(defaultUserId)
     
     if (analyses.length === 0) {
       return NextResponse.json({ 
@@ -112,7 +109,7 @@ Please provide your analysis in this exact format:
     const processingTime = Date.now() - startTime
 
     // Create a special session for overall analysis
-    const session = await ProblemFramingService.createSession(parseInt(userId), 'Overall Analysis - Cross-Agent Synthesis')
+    const session = await ProblemFramingService.createSession(defaultUserId, 'Overall Analysis - Cross-Agent Synthesis')
 
     // Save as a special uploaded file (virtual file representing the synthesis)
     const uploadedFile = await ProblemFramingService.saveUploadedFile(

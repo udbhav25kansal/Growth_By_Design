@@ -32,16 +32,13 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData()
     const file = formData.get('file') as File | null
-    const userId = formData.get('userId') as string | null
-    const sessionId = formData.get('sessionId') as string | null
-
+    
     if (!file) {
-      return NextResponse.json({ error: 'No file uploaded (expected field "file")' }, { status: 400 })
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
-    }
+    // Use a default user ID since we removed authentication
+    const defaultUserId = 1;
 
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
@@ -53,16 +50,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unable to extract text from document' }, { status: 422 })
     }
 
-    // Create or get session
-    let currentSessionId = sessionId ? parseInt(sessionId) : null
-    if (!currentSessionId) {
-      const session = await ProblemFramingService.createSession(parseInt(userId), 'Product Analytics Analysis')
-      currentSessionId = session.id
-    }
+    // Create a session for this analysis
+    const session = await ProblemFramingService.createSession(defaultUserId, 'Product Analytics Analysis');
 
     // Save uploaded file to database
     const uploadedFile = await ProblemFramingService.saveUploadedFile(
-      currentSessionId,
+      session.id,
       'product_analytics',
       file,
       extractedText,
@@ -170,7 +163,7 @@ PRODUCT ANALYTICS DATA END`
 
     return NextResponse.json({ 
       analysis: rawResponse,
-      sessionId: currentSessionId,
+      sessionId: session.id,
       fileId: uploadedFile.id,
       analysisId: analysisResult.id
     })

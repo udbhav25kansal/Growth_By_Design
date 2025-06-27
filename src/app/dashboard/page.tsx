@@ -42,14 +42,7 @@ interface ProductAnalyticsAnalysis {
   metadata?: any;
 }
 
-interface User {
-  id: number;
-  email: string;
-  name: string;
-}
-
 export default function DashboardPage() {
-  const [user, setUser] = useState<User | null>(null);
   const [data, setData] = useState<OnboardingData | null>(null);
   const [actionText, setActionText] = useState('');
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
@@ -99,28 +92,6 @@ export default function DashboardPage() {
   const [showNarrativeTooltip, setShowNarrativeTooltip] = useState(false);
 
   useEffect(() => {
-    // Check if user is authenticated
-    const checkAuth = async () => {
-      try {
-        const response = await fetch('/api/auth/me');
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-          console.log('User authenticated:', userData);
-        } else {
-          console.error('Authentication failed, redirecting to login');
-          window.location.href = '/login';
-          return;
-        }
-      } catch (error) {
-        console.error('Error checking authentication:', error);
-        window.location.href = '/login';
-        return;
-      }
-    };
-
-    checkAuth();
-
     // Load onboarding data
     const raw = window.localStorage.getItem("onboardingData");
     if (raw) {
@@ -183,10 +154,9 @@ export default function DashboardPage() {
   const handleAnalyzeProblem = async () => {
     console.log('handleAnalyzeProblem called');
     console.log('selectedFile:', selectedFile);
-    console.log('user:', user);
     
-    if (!selectedFile || !user) {
-      console.log('Missing selectedFile or user, returning early');
+    if (!selectedFile) {
+      console.log('Missing selectedFile, returning early');
       return;
     }
 
@@ -194,7 +164,6 @@ export default function DashboardPage() {
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
-      formData.append('userId', user.id.toString());
 
       console.log('Sending request to /api/problem-frame');
       const response = await fetch('/api/problem-frame', {
@@ -269,13 +238,12 @@ export default function DashboardPage() {
   };
 
   const handleAnalyzeInteraction = async () => {
-    if (!selectedInteractionFile || !user) return;
+    if (!selectedInteractionFile) return;
 
     setIsAnalyzingInteraction(true);
     try {
       const formData = new FormData();
       formData.append('file', selectedInteractionFile);
-      formData.append('userId', user.id.toString());
 
       const response = await fetch('/api/customer-interaction', {
         method: 'POST',
@@ -346,13 +314,12 @@ export default function DashboardPage() {
   };
 
   const handleAnalyzeAnalytics = async () => {
-    if (!selectedAnalyticsFile || !user) return;
+    if (!selectedAnalyticsFile) return;
 
     setIsAnalyzingAnalytics(true);
     try {
       const formData = new FormData();
       formData.append('file', selectedAnalyticsFile);
-      formData.append('userId', user.id.toString());
 
       const response = await fetch('/api/product-analytics', {
         method: 'POST',
@@ -440,11 +407,9 @@ export default function DashboardPage() {
   };
 
   const fetchAnalysisHistory = async () => {
-    if (!user) return;
-
     setIsLoadingHistory(true);
     try {
-      const response = await fetch(`/api/analyses?userId=${user.id}`);
+      const response = await fetch('/api/analyses');
       if (response.ok) {
         const result = await response.json();
         setAnalysisHistory(result.analyses || []);
@@ -460,8 +425,6 @@ export default function DashboardPage() {
   };
 
   const generateOverallAnalysis = async () => {
-    if (!user) return;
-
     setIsGeneratingOverall(true);
     try {
       const response = await fetch('/api/overall-analysis', {
@@ -469,7 +432,6 @@ export default function DashboardPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId: user.id }),
       });
 
       if (response.ok) {

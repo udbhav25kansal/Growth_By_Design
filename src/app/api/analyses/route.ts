@@ -6,59 +6,53 @@ export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url)
-    const userId = searchParams.get('userId')
+    // Use a default user ID since we removed authentication
+    const defaultUserId = 1;
 
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
-    }
-
-    // Get user's analysis history
-    const analyses = await ProblemFramingService.getAnalysesByUser(parseInt(userId))
+    const analyses = await ProblemFramingService.getAnalysesByUser(defaultUserId)
     
-    // Get user's sessions for additional context
-    const sessions = await ProblemFramingService.getSessionsByUser(parseInt(userId))
+    // Also get sessions for this user
+    const sessions = await ProblemFramingService.getSessionsByUser(defaultUserId)
 
     return NextResponse.json({
-      success: true,
       analyses,
-      sessions,
-      total: analyses.length
+      sessions
     })
   } catch (error: any) {
-    console.error('Error fetching user analyses:', error)
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
+    console.error('Error fetching analyses:', error)
+    return NextResponse.json({ error: error.message || 'Failed to fetch analyses' }, { status: 500 })
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { action, userId, sessionName, analysisId, rating, notes } = body
+    const { action, sessionName, analysisId, rating, notes } = body
 
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
+    // Use a default user ID since we removed authentication
+    const defaultUserId = 1;
+
+    if (action === 'create_session') {
+      if (!sessionName) {
+        return NextResponse.json({ error: 'Session name is required' }, { status: 400 })
+      }
+
+      const session = await ProblemFramingService.createSession(defaultUserId, sessionName)
+      return NextResponse.json({ session })
     }
 
-    switch (action) {
-      case 'create-session':
-        // Create a new session
-        const session = await ProblemFramingService.createSession(parseInt(userId), sessionName)
-        return NextResponse.json({ session })
+    if (action === 'rate_analysis') {
+      if (!analysisId || rating === undefined) {
+        return NextResponse.json({ error: 'Analysis ID and rating are required' }, { status: 400 })
+      }
 
-      case 'rate-analysis':
-        // Rate an analysis
-        if (!analysisId || !rating) {
-          return NextResponse.json({ error: 'Analysis ID and rating are required' }, { status: 400 })
-        }
-        await ProblemFramingService.updateAnalysisRating(parseInt(analysisId), parseInt(rating), notes)
-        return NextResponse.json({ success: true })
-
-      default:
-        return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+      await ProblemFramingService.updateAnalysisRating(analysisId, rating, notes)
+      return NextResponse.json({ success: true })
     }
+
+    return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   } catch (error: any) {
-    console.error('Error processing analyses request:', error)
-    return NextResponse.json({ error: error.message || 'Failed to process request' }, { status: 500 })
+    console.error('Error in analyses POST:', error)
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 } 

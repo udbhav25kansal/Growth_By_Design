@@ -4,15 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 
-interface User {
-  id: number;
-  email: string;
-  name: string;
-}
-
 export default function AppHeader() {
   const pathname = usePathname();
-  const [user, setUser] = useState<User | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -25,67 +18,39 @@ export default function AppHeader() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Check authentication status
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await fetch('/api/auth/me');
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-        }
-      } catch (error) {
-        // User not authenticated
-      }
-    };
-    checkAuth();
-  }, []);
-
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      setUser(null);
-      window.location.href = '/';
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  };
-
   const navLinks = [
-    { href: "/dashboard", label: "Dashboard", icon: "📊", protected: true },
+    { href: "/dashboard", label: "Dashboard", icon: "📊" },
+    { href: "/get-started", label: "Get Started", icon: "🚀" },
   ];
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200`}
-    >
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      scrolled 
+        ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200/50" 
+        : "bg-transparent"
+    }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16 lg:h-18">
-          {/* Logo/Brand */}
-          <Link 
-            href="/"
-            className="flex items-center space-x-3 group"
-          >
-            <div className="relative">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-200 group-hover:scale-105">
+        <div className="flex items-center justify-between h-16 lg:h-20">
+          {/* Logo */}
+          <div className="flex items-center space-x-4">
+            <Link href="/" className="group flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
                 <span className="text-white font-bold text-lg">G</span>
               </div>
-            </div>
-            <div className="hidden sm:block">
-              <span className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                Growth By Design
-              </span>
-              <div className="text-xs text-gray-500 font-medium tracking-wide">
-                AI-Powered Growth Intelligence
+              <div className="hidden sm:block">
+                <div className="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+                  Growth By Design
+                </div>
+                <div className="text-xs text-gray-500 font-medium tracking-wide">
+                  AI-Powered Growth Intelligence
+                </div>
               </div>
-            </div>
-          </Link>
+            </Link>
+          </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-1" role="navigation" aria-label="Main navigation">
             {navLinks.map((link) => {
-              if (link.protected && !user) return null;
-              
               const isActive = pathname === link.href;
               return (
                 <Link
@@ -109,84 +74,51 @@ export default function AppHeader() {
             })}
           </nav>
 
-          {/* User Menu / Auth Buttons */}
-          <div className="hidden lg:flex items-center space-x-4">
-            {user ? (
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-3 px-4 py-2 bg-gray-50 rounded-lg">
-                  <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-medium text-sm">
-                      {user.name?.charAt(0).toUpperCase() || user.email.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="text-sm">
-                    <div className="font-medium text-gray-900">{user.name || 'User'}</div>
-                    <div className="text-gray-500 text-xs">{user.email}</div>
-                  </div>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
-                >
-                  Sign Out
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-3">
-                <Link
-                  href="/login"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-all duration-200"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/signup"
-                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-                >
-                  Get Started
-                </Link>
-              </div>
-            )}
+          {/* CTA Button */}
+          <div className="flex items-center space-x-3">
+            <Link
+              href="/get-started"
+              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+            >
+              Get Started
+            </Link>
           </div>
 
-          {/* Mobile menu button */}
-          <button 
+          {/* Mobile Menu Button */}
+          <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-gray-50 transition-colors duration-200"
+            className="lg:hidden relative w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors duration-200 flex items-center justify-center"
             aria-label="Toggle mobile menu"
           >
-            <svg 
-              className={`w-6 h-6 transition-transform duration-200 ${mobileMenuOpen ? 'rotate-90' : ''}`} 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              {mobileMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
+            <div className="w-5 h-5 flex flex-col justify-center items-center">
+              <span className={`bg-gray-600 block transition-all duration-300 ease-out h-0.5 w-5 rounded-sm ${
+                mobileMenuOpen ? 'rotate-45 translate-y-1' : '-translate-y-0.5'
+              }`}></span>
+              <span className={`bg-gray-600 block transition-all duration-300 ease-out h-0.5 w-5 rounded-sm my-0.5 ${
+                mobileMenuOpen ? 'opacity-0' : 'opacity-100'
+              }`}></span>
+              <span className={`bg-gray-600 block transition-all duration-300 ease-out h-0.5 w-5 rounded-sm ${
+                mobileMenuOpen ? '-rotate-45 -translate-y-1' : 'translate-y-0.5'
+              }`}></span>
+            </div>
           </button>
         </div>
 
-        {/* Mobile Navigation Menu */}
+        {/* Mobile Menu */}
         <div className={`lg:hidden transition-all duration-300 ease-in-out ${
           mobileMenuOpen 
-            ? 'max-h-96 opacity-100 pb-6' 
-            : 'max-h-0 opacity-0 overflow-hidden'
-        }`}>
-          <div className="pt-4 space-y-2">
+            ? "max-h-96 opacity-100 visible" 
+            : "max-h-0 opacity-0 invisible"
+        } overflow-hidden`}>
+          <div className="py-4 space-y-2 bg-white/95 backdrop-blur-md rounded-2xl mt-4 border border-gray-200/50 shadow-xl">
             {navLinks.map((link) => {
-              if (link.protected && !user) return null;
-              
               const isActive = pathname === link.href;
               return (
                 <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-medium transition-all duration-200 ${
+                  className={`flex items-center space-x-3 px-4 py-3 mx-2 rounded-xl text-base font-medium transition-all duration-200 ${
                     isActive 
                       ? "text-blue-600 bg-blue-50" 
                       : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
@@ -198,53 +130,20 @@ export default function AppHeader() {
               );
             })}
             
-            {!user && (
-              <div className="pt-4 border-t border-gray-200 mt-4">
-                <div className="space-y-3">
-                  <div className="text-center py-2">
-                    <p className="text-sm text-gray-600 mb-3">Ready to get started?</p>
-                  </div>
-                  <Link
-                    href="/get-started"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-base font-bold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 text-center shadow-lg"
-                  >
-                    🚀 Get Started
-                  </Link>
-                  <Link
-                    href="/login"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-4 py-3 text-base font-medium text-center text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-all duration-200 border border-gray-200"
-                  >
-                    Sign In
-                  </Link>
+            <div className="pt-4 border-t border-gray-200 mt-4">
+              <div className="space-y-3">
+                <div className="text-center py-2">
+                  <p className="text-sm text-gray-600 mb-3">Ready to get started?</p>
                 </div>
+                <Link
+                  href="/get-started"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-base font-bold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 text-center shadow-lg mx-2"
+                >
+                  🚀 Get Started
+                </Link>
               </div>
-            )}
-            
-            {user && (
-              <div className="pt-4 border-t border-gray-200 mt-4">
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3 px-4 py-3 bg-gray-50 rounded-lg">
-                    <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center">
-                      <span className="text-white font-medium">
-                        {user.name?.charAt(0).toUpperCase() || user.email.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-900">{user.name || 'User'}</div>
-                      <div className="text-gray-500 text-sm">{user.email}</div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left px-4 py-3 text-base font-medium text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
